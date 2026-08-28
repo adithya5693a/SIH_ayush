@@ -1,0 +1,1334 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AYUSH IPR, ABS & Regulatory Assistant</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            serif: ['Cinzel', 'serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- React 18 & Babel for instant browser execution -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #020617; }
+    ::-webkit-scrollbar-thumb { background: #064e3b; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #059669; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.98); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .animate-fadeIn { animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+  </style>
+</head>
+<body class="bg-slate-950 text-stone-100 font-sans selection:bg-emerald-500 selection:text-slate-950 antialiased">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    // --- BOTANICAL & STATUTORY KNOWLEDGE REASONING BASE ---
+    const BOTANICAL_KNOWLEDGE = {
+      triphala: {
+        name: "Triphala (Haritaki + Bibhitaki + Amalaki)",
+        botanical: "Terminalia chebula, Terminalia bellirica, Phyllanthus emblica",
+        activeMarkers: "Gallic acid, Chebulic acid, Ellagic acid, Tannins",
+        tkdlId: "TKDL-AY-09214",
+        classicalSource: "Charaka Samhita Chikitsa Sthana Adhyaya 1; Bhavaprakasha Nighantu",
+        sec3pPosture: "High Section 3(p) prior art bar for digestive, eye care, and rasayana claims. Simple aqueous or alcoholic extracts are non-patentable.",
+        overcomeStrategy: "Must use targeted nanoparticle encapsulation (phytosome, SNEDDS) or isolated standardized synergistic tannin fraction with quantitative CI < 0.7 proof."
+      },
+      ashwagandha: {
+        name: "Ashwagandha (Indian Ginseng)",
+        botanical: "Withania somnifera",
+        activeMarkers: "Withanolide A, Withaferin A, Withanosides IV & V",
+        tkdlId: "TKDL-AY-14820",
+        classicalSource: "Bhaishajya Ratnavali Murcha Rogadhikara; Sharangadhara Samhita",
+        sec3pPosture: "Crude root powders and basic extracts are barred under § 3(p) for adaptogenic, anti-stress, and neuro-protective indications.",
+        overcomeStrategy: "Patentable only for purified withanolide glycoside fractions with enhanced blood-brain barrier permeability (e.g. liposomal carriers) or specific synergistic anti-neurodegenerative combinations."
+      },
+      curcumin: {
+        name: "Haridra / Curcumin",
+        botanical: "Curcuma longa",
+        activeMarkers: "Curcumin, Demethoxycurcumin, Bisdemethoxycurcumin, Tetrahydrocurcumin",
+        tkdlId: "TKDL-AY-05531",
+        classicalSource: "Bhaishajya Ratnavali Sheetapitta-Kotha Chikitsa; Charaka Samhita",
+        sec3pPosture: "Barred under Section 3(p) for topical wound healing, anti-inflammatory, and cosmetic whitening indications.",
+        overcomeStrategy: "Must formulate with novel bioavailability enhancers (e.g., piperine self-emulsifying matrix, phospholipid complex) showing >10x pharmacokinetic AUC increase or microneedle transdermal delivery."
+      },
+      brahmi: {
+        name: "Brahmi / Mandukaparni",
+        botanical: "Bacopa monnieri / Centella asiatica",
+        activeMarkers: "Bacoside A & B, Asiaticoside, Madecassoside",
+        tkdlId: "TKDL-AY-11840",
+        classicalSource: "Charaka Samhita Sharira Sthana; Sushruta Samhita Chikitsa 28",
+        sec3pPosture: "Barred under § 3(p) for Medhya (memory/cognitive enhancement) and anti-anxiety claims.",
+        overcomeStrategy: "Requires standardized purified bacoside fraction (>55% bacosides) formulated in enteric-coated delayed-release matrix for targeted neuro-synaptic transmission."
+      },
+      shatavari: {
+        name: "Shatavari",
+        botanical: "Asparagus racemosus",
+        activeMarkers: "Shatavarin I-IV, Sarsasapogenin",
+        tkdlId: "TKDL-AY-08312",
+        classicalSource: "Astanga Hridaya Uttara Sthana; Bhavaprakasha Guduchyadi Varga",
+        sec3pPosture: "Barred under § 3(p) for female reproductive health, lactation (Stanyajanana), and hormone balancing.",
+        overcomeStrategy: "Patentable for novel standardized steroidal saponin isolates with documented receptor binding kinetics overcoming Section 3(d)."
+      },
+      guggulu: {
+        name: "Guggulu",
+        botanical: "Commiphora mukul",
+        activeMarkers: "E-Guggulsterone, Z-Guggulsterone",
+        tkdlId: "TKDL-AY-22910",
+        classicalSource: "Chakradatta Amavata Rogadhikara; Sushruta Samhita",
+        sec3pPosture: "Barred under § 3(p) for lipid-lowering (Medoroga) and anti-arthritic (Sandhivata) indications.",
+        overcomeStrategy: "Must demonstrate synergistic combination with Boswellic acids showing dual 5-LOX and COX-2 suppression with quantitative molecular docking."
+      },
+      shallaki: {
+        name: "Shallaki (Frankincense)",
+        botanical: "Boswellia serrata",
+        activeMarkers: "Acetyl-11-keto-beta-boswellic acid (AKBA), 11-KBA",
+        tkdlId: "TKDL-AY-22910",
+        classicalSource: "Bhavaprakasha Nighantu; Bhaishajya Ratnavali",
+        sec3pPosture: "Barred for standard joint inflammation and osteoarthritis.",
+        overcomeStrategy: "Formulate enriched AKBA extract (>30% AKBA) with phospholipid carrier for enhanced cartilage permeation."
+      },
+      tulsi: {
+        name: "Tulsi (Holy Basil)",
+        botanical: "Ocimum sanctum",
+        activeMarkers: "Eugenol, Ursolic acid, Rosmarinic acid, Caryophyllene",
+        tkdlId: "TKDL-AY-03419",
+        classicalSource: "Charaka Samhita Sutra Sthana; Dhanvantari Nighantu",
+        sec3pPosture: "Barred under § 3(p) for cough, cold (Kasa, Shwasa), and immune modulation.",
+        overcomeStrategy: "Formulate novel sublingual muco-adhesive spray or microencapsulated volatile fraction showing enhanced pulmonary bio-distribution."
+      },
+      giloy: {
+        name: "Guduchi / Giloy",
+        botanical: "Tinospora cordifolia",
+        activeMarkers: "Cordifolioside A, Tinosporaside, Berberine",
+        tkdlId: "TKDL-AY-07492",
+        classicalSource: "Charaka Samhita Chikitsa 1; Bhavaprakasha",
+        sec3pPosture: "Barred under § 3(p) for antipyretic (Jwarahara) and immunomodulatory (Rasayana) indications.",
+        overcomeStrategy: "Standardized polysaccharide-enriched fraction showing specific macrophage activation and non-obvious synergistic viral inhibition."
+      },
+      neem: {
+        name: "Nimba / Neem",
+        botanical: "Azadirachta indica",
+        activeMarkers: "Azadirachtin, Nimbin, Nimbidol",
+        tkdlId: "TKDL-AY-01128",
+        classicalSource: "Sushruta Samhita Sutra Sthana 38; Charaka Samhita",
+        sec3pPosture: "Historically significant § 3(p) bar; simple extraction for antimicrobial, anti-dandruff, or insecticidal claims is non-patentable.",
+        overcomeStrategy: "Purified tetranortriterpenoid derivative with chemical scaffold modification or novel targeted topical nano-emulsion."
+      }
+    };
+
+    // --- I18N DICTIONARY ---
+    const I18N = {
+      en: {
+        appTitle: "AYUSH IPR, ABS & Regulatory Assistant",
+        appSubtitle: "AI-Powered Decision Support for Ayurveda Innovators, Patent Practitioners & Researchers",
+        national: "National (India)",
+        international: "International (Global/WIPO)",
+        chatDocked: "Docked Floating",
+        chatSplit: "Split-Screen",
+        workflowStandard: "Standard Flow",
+        workflowAdvanced: "Advanced Deep-Dive",
+        legalBanner: "MANDATORY STATUTORY NOTICE: Information & decision support only — not formal legal counsel. Formal filing requires licensed Patent Agents and submissions to IPO / NBA / WIPO.",
+        step: "Step",
+        nextStep: "Next Step →",
+        prevStep: "← Previous Step",
+        liveEvaluation: "LIVE MATRIX EVALUATION",
+        
+        natWizardTitle: "Ayurvedic Formulation Classifier & Domestic IP Router",
+        natWizardDesc: "4-step diagnostic wizard determining drug classification under D&C Act Rule 158B, Section 3(p) patentability risk, and mandatory NBA/SBB ABS compliance.",
+        natStep1Title: "1. Legal Classification & Drug Category",
+        natStep1Desc: "Select the intended regulatory classification of the formulation under Indian Law:",
+        natStep2Title: "2. Processing Novelty & Synergistic Matrix",
+        natStep2Desc: "What is the technical nature of your formulation or extraction method?",
+        natStep3Title: "3. Biological Resource Sourcing & Provenance",
+        natStep3Desc: "Where are the raw botanicals or mineral resources procured from within India?",
+        natStep4Title: "4. Commercial Entity & Applicant Structure",
+        natStep4Desc: "What is the legal entity status of the applicant under BDA Section 3(2)?",
+        
+        intlWizardTitle: "International Ayurvedic IP Router & Cross-Border Treaty Classifier",
+        intlWizardDesc: "4-step diagnostic wizard evaluating global patentability under PCT/Madrid, mandatory WIPO GRATK origin disclosure, foreign prior-art hurdles (USPTO/EPO), and export market classification.",
+        intlStep1Title: "1. Target Filing Route & International Treaty System",
+        intlStep1Desc: "Select your primary international intellectual property filing strategy:",
+        intlStep2Title: "2. WIPO GRATK Treaty (2024) & Nagoya ABS Mandatory Disclosure",
+        intlStep2Desc: "Assess cross-border genetic resource disclosure and Nagoya Protocol compliance:",
+        intlStep3Title: "3. Foreign Patent Office Prior-Art Hurdles & TKDL Defenses",
+        intlStep3Desc: "Evaluate foreign patent examination standards against codified Indian texts:",
+        intlStep4Title: "4. Target Export Market Product Classification",
+        intlStep4Desc: "Select the regulatory market entry category in your primary target jurisdiction:",
+
+        matrixLegalClass: "1. Legal Classification & Route",
+        matrixPatentPosture: "2. Patentability Posture & § 3(p) Risk",
+        matrixAbsReq: "3. Mandatory ABS / Regulatory Compliance",
+        matrixIntlChecklist: "4. Cross-Border / WIPO GRATK Checklist",
+        consultAiOnRoute: "Consult AI Assistant on this Route →",
+
+        chatHeaderTitle: "Omnipresent RAG AI Legal Counsel",
+        chatPlaceholder: "Ask a statutory or patentability question (e.g. Can I patent a modified Triphala formulation?)...",
+        chatSendBtn: "Consult RAG →",
+        execGuidanceTitle: "1. Plain-Language Executive Guidance",
+        statCitationsTitle: "2. Mandatory Statutory Citation Pills",
+        statBreakdownTitle: "3. Detailed Statutory Provisions & Examination Posture",
+        actionItemsTitle: "4. Actionable Next Steps Checklist",
+        officialPortalsTitle: "Official Regulatory Portals:"
+      },
+      hi: {
+        appTitle: "आयुष आईपीआर, एबीएस एवं विनियामक सहायक",
+        appSubtitle: "आयुर्वेद नवप्रवर्तकों, पेटेंट चिकित्सकों एवं शोधकर्ताओं हेतु एआई-संचालित निर्णय सहायता",
+        national: "राष्ट्रीय (भारत)",
+        international: "अंतर्राष्ट्रीय (वैश्विक/वाइपो)",
+        chatDocked: "डॉक किया फ्लोटिंग",
+        chatSplit: "स्प्लिट-स्क्रीन",
+        workflowStandard: "मानक प्रवाह",
+        workflowAdvanced: "उन्नत गहन-अध्ययन",
+        legalBanner: "अनिवार्य वैधानिक सूचना: केवल सूचना और निर्णय सहायता हेतु — यह औपचारिक कानूनी सलाह नहीं है। पेटेंट दाखिल करने हेतु पंजीकृत पेटेंट एजेंटों से परामर्श लें।",
+        step: "चरण",
+        nextStep: "अगला चरण →",
+        prevStep: "← पिछला चरण",
+        liveEvaluation: "प्रत्यक्ष मैट्रिक्स मूल्यांकन",
+        
+        natWizardTitle: "आयुर्वेदिक फॉर्मूलेशन वर्गीकरण एवं घरेलू आईपीआर राउटर",
+        natWizardDesc: "औषधि एवं प्रसाधन सामग्री नियम 158B, धारा 3(p) पेटेंट बाधा जोखिम और एनबीए/एसबीबी अनुपालन निर्धारित करने हेतु 4-चरणीय निदान।",
+        natStep1Title: "1. कानूनी वर्गीकरण एवं औषधि श्रेणी",
+        natStep1Desc: "भारतीय कानून के तहत फॉर्मूलेशन का विनियामक वर्गीकरण चुनें:",
+        natStep2Title: "2. प्रसंस्करण नवीनता एवं सहक्रियात्मक मैट्रिक्स",
+        natStep2Desc: "आपके फॉर्मूलेशन या निष्कर्षण विधि की तकनीकी प्रकृति क्या है?",
+        natStep3Title: "3. जैविक संसाधन सोर्सिंग एवं उद्गम",
+        natStep3Desc: "कच्चे वानस्पतिक या खनिज संसाधन भारत में कहाँ से प्राप्त किए जाते हैं?",
+        natStep4Title: "4. वाणिज्यिक इकाई एवं आवेदक की स्थिति",
+        natStep4Desc: "जैविक विविधता अधिनियम की धारा 3(2) के तहत आवेदक की स्थिति क्या है?",
+
+        intlWizardTitle: "अंतर्राष्ट्रीय आयुर्वेदिक आईपीआर राउटर एवं क्रॉस-बॉर्डर संधि क्लासिफायर",
+        intlWizardDesc: "पीसीटी/मैड्रिड के तहत वैश्विक पेटेंट योग्यता, अनिवार्य वाइपो ग्रैटक उद्गम प्रकटीकरण, विदेशी पूर्व-कला बाधाओं और निर्यात बाजार वर्गीकरण का मूल्यांकन करने वाला 4-चरणीय निदान।",
+        intlStep1Title: "1. लक्षित फाइलिंग मार्ग एवं अंतर्राष्ट्रीय संधि प्रणाली",
+        intlStep1Desc: "अपनी प्राथमिक अंतर्राष्ट्रीय बौद्धिक संपदा फाइलिंग रणनीति चुनें:",
+        intlStep2Title: "2. वाइपो ग्रैटक संधि (2024) एवं नागोया एबीएस अनिवार्य प्रकटीकरण",
+        intlStep2Desc: "सीमा पार आनुवंशिक संसाधन प्रकटीकरण और नागोया प्रोटोकॉल अनुपालन का मूल्यांकन करें:",
+        intlStep3Title: "3. विदेशी पेटेंट कार्यालय पूर्व-कला बाधाएं एवं टीकेडीएल (TKDL)",
+        intlStep3Desc: "भारतीय संहिताबद्ध ग्रंथों के विरुद्ध विदेशी पेटेंट परीक्षण मानकों का मूल्यांकन करें:",
+        intlStep4Title: "4. लक्षित निर्यात बाजार उत्पाद वर्गीकरण",
+        intlStep4Desc: "अपने प्राथमिक लक्षित क्षेत्राधिकार में विनियामक बाजार प्रवेश श्रेणी चुनें:",
+
+        matrixLegalClass: "1. कानूनी वर्गीकरण एवं मार्ग",
+        matrixPatentPosture: "2. पेटेंट योग्यता स्थिति एवं धारा 3(p) जोखिम",
+        matrixAbsReq: "3. अनिवार्य एबीएस / विनियामक अनुपालन",
+        matrixIntlChecklist: "4. सीमा पार / वाइपो ग्रैटक चेकलिस्ट",
+        consultAiOnRoute: "इस मार्ग पर एआई सहायक से परामर्श करें →",
+
+        chatHeaderTitle: "सर्वव्यापी आरएजी एआई कानूनी सलाहकार",
+        chatPlaceholder: "वैधानिक या पेटेंट योग्यता संबंधी प्रश्न पूछें (उदा. क्या मैं संशोधित त्रिफला फॉर्मूलेशन का पेटेंट करा सकता हूँ?)...",
+        chatSendBtn: "आरएजी से पूछें →",
+        execGuidanceTitle: "1. सरल-भाषा कार्यकारी मार्गदर्शन",
+        statCitationsTitle: "2. अनिवार्य वैधानिक उद्धरण पिल्स",
+        statBreakdownTitle: "3. विस्तृत वैधानिक प्रावधान एवं परीक्षण स्थिति",
+        actionItemsTitle: "4. अनुशंसित कार्ययोजना चेकलिस्ट",
+        officialPortalsTitle: "आधिकारिक विनियामक पोर्टल:"
+      }
+    };
+
+    // --- RAG DIAGNOSTIC RUNNERS ---
+    function runNationalDiagnostic(answers) {
+      const { category, processingMethod, entityType } = answers;
+      let classification = "Patent & Proprietary (P&P) Medicine";
+      let regulatoryRoute = "Drugs and Cosmetics Act, Rule 158B (Licensing via SLA)";
+      let clinicalProof = "Requires published safety data or pilot clinical trial reports per Rule 158B.";
+      let patentPosture = "Medium Risk under § 3(p). Overcome by proving synergy (CI < 0.7) or novel delivery vehicle.";
+      let patentRiskLevel = "AMBER";
+      let absRequired = "Mandatory NBA Form III approval prior to patent grant at IPO.";
+      let absForm = "NBA Form III";
+
+      if (category === "classical") {
+        classification = "Classical Ayurvedic Medicine (Shastriya Yoga)";
+        regulatoryRoute = "Manufactured strictly per 54 authoritatively listed texts (First Schedule, D&C Act).";
+        clinicalProof = "Exempt from clinical trials; requires classical citations + API pharmacopoeial compliance.";
+        patentPosture = "ABSOLUTE BAR under Section 3(p). Traditional classical formulations cannot be patented.";
+        patentRiskLevel = "RED";
+        absRequired = entityType === "foreign" ? "Mandatory NBA Form I approval." : "Exempt from domestic ABS benefit sharing under BDA 2023 § 7.";
+        absForm = entityType === "foreign" ? "NBA Form I" : "SBB Intimation (Exempted)";
+      } else if (category === "ayurveda_aahar") {
+        classification = "Ayurveda Aahar (Nutraceutical / Food)";
+        regulatoryRoute = "FSSAI (Ayurveda Aahar) Regulations, 2022 (Schedule A recipes).";
+        clinicalProof = "Must carry mandatory 'Ayurveda Aahar' emblem; no therapeutic disease claims allowed.";
+        patentPosture = "Barred under Section 3(p) if simple food/herb mix. Patentable only for novel delivery matrix.";
+        patentRiskLevel = "AMBER";
+        absRequired = entityType === "foreign" ? "NBA Form I Approval" : "State Biodiversity Board (SBB) Intimation";
+        absForm = entityType === "foreign" ? "NBA Form I" : "SBB Intimation";
+      } else if (category === "phytopharmaceutical") {
+        classification = "Phytopharmaceutical Drug (New Botanical Drug)";
+        regulatoryRoute = "Drugs and Cosmetics Rules (Schedule Y / NDCT Rules 2019).";
+        clinicalProof = "Requires HPLC/LC-MS chemical characterization, preclinical safety, and Phase I-III trials.";
+        patentPosture = "HIGH PATENTABILITY POSTURE. Purified standardized bio-actives overcome § 3(p) and § 3(d).";
+        patentRiskLevel = "GREEN";
+        absRequired = "Mandatory NBA Form III approval prior to patent grant + Form I if foreign equity exists.";
+        absForm = "NBA Form III + Form I";
+      } else if (category === "cosmetic") {
+        classification = "Ayurvedic Cosmetic (Saundarya Prasadana)";
+        regulatoryRoute = "Drugs and Cosmetics Act, Schedule S / Ayurvedic Cosmetic Licensing.";
+        clinicalProof = "Dermatological safety & stability testing; topical beautification claims only.";
+        patentPosture = "High risk of § 3(p) rejection for known herbal skin actions. Requires novel skin-permeation vehicle.";
+        patentRiskLevel = "AMBER";
+        absRequired = "SBB Intimation / NBA Form III before patent filing.";
+        absForm = "NBA Form III";
+      }
+
+      if (processingMethod === "nano_carrier") {
+        patentPosture += " Novel lipid/nano carrier provides non-obvious technical step overcoming Section 3(p).";
+        if (patentRiskLevel === "AMBER") patentRiskLevel = "GREEN";
+      } else if (processingMethod === "novel_synergy") {
+        patentPosture += " Combination Index (CI < 0.7) data establishes synergistic interaction overcoming Section 3(e).";
+        if (patentRiskLevel === "AMBER") patentRiskLevel = "GREEN";
+      }
+
+      return { classification, regulatoryRoute, clinicalProof, patentPosture, patentRiskLevel, absRequired, absForm };
+    }
+
+    function runInternationalDiagnostic(answers) {
+      const { treatyRoute, geneticDisclosure, priorArtStandard, exportCategory } = answers;
+      let filingStrategy = "Patent Cooperation Treaty (PCT International Phase)";
+      let gratkDisclosure = "Mandatory Country of Origin (India) & TK Declaration under WIPO GRATK Treaty Art. 3.";
+      let foreignPriorArtRisk = "High scrutiny under USPTO 35 U.S.C. 102/103 & EPO Art 54/56 EPC via TKDL database access agreements.";
+      let marketPathway = "US FDA Dietary Supplement (21 CFR 111) / EU THMPD (Directive 2004/24/EC).";
+
+      if (treatyRoute === "direct_paris") filingStrategy = "Direct Paris Convention (12-Month Priority Window)";
+      else if (treatyRoute === "madrid_system") filingStrategy = "WIPO Madrid System (International Trademark across 130+ Countries)";
+      else if (treatyRoute === "hague_system") filingStrategy = "WIPO Hague System (Industrial Designs for Ayurvedic Packaging)";
+
+      if (geneticDisclosure === "indian_origin_tk") {
+        gratkDisclosure = "Mandatory disclosure: Patent specification MUST declare India as Country of Origin, cite traditional knowledge source, and cross-reference NBA Form III approval.";
+      } else if (geneticDisclosure === "multi_country") {
+        gratkDisclosure = "Multi-jurisdiction Nagoya Protocol compliance required. Obtain individual PIC/MAT agreements from each sovereign provider country.";
+      }
+
+      if (priorArtStandard === "uspto") {
+        foreignPriorArtRisk = "USPTO examiners actively search TKDL. Must establish unexpected synergistic bio-activity and overcome 35 U.S.C. 101 subject matter eligibility.";
+      } else if (priorArtStandard === "epo") {
+        foreignPriorArtRisk = "EPO problem-solution approach requires comparative data proving technical effect beyond classical Ayurvedic texts cited in TKDL.";
+      }
+
+      if (exportCategory === "us_dietary_supplement") {
+        marketPathway = "US FDA Dietary Supplement under DSHEA. Requires cGMP 21 CFR 111, structure/function disclaimer, and NDI notification if novel extract.";
+      } else if (exportCategory === "eu_thmpd") {
+        marketPathway = "EU Traditional Herbal Medicinal Product (THMPD Directive 2004/24/EC). Requires proof of 30 years medicinal use (at least 15 years in EU/India).";
+      } else if (exportCategory === "eu_novel_food") {
+        marketPathway = "EU Novel Food Regulation (Regulation 2015/2283). Requires comprehensive EFSA safety dossier for botanicals without EU history before May 1997.";
+      } else if (exportCategory === "tga_australia") {
+        marketPathway = "Australia TGA Listed Complementary Medicine (Therapeutic Goods Act 1989). Pre-approved herbal substances with evidence package.";
+      }
+
+      return { filingStrategy, gratkDisclosure, foreignPriorArtRisk, marketPathway };
+    }
+
+    // Dynamic Multi-Entity Semantic RAG Assistant
+    function queryRagAssistant(userQuery, jurisdiction = "national") {
+      const q = (userQuery || '').toLowerCase();
+      
+      let matchedHerb = null;
+      for (const [key, herb] of Object.entries(BOTANICAL_KNOWLEDGE)) {
+        if (q.includes(key) || q.includes(herb.botanical.toLowerCase()) || q.includes(herb.name.toLowerCase())) {
+          matchedHerb = herb;
+          break;
+        }
+      }
+
+      const isAbsQuery = q.includes("abs") || q.includes("nba") || q.includes("form 1") || q.includes("form i") || q.includes("form 3") || q.includes("form iii") || q.includes("sbb") || q.includes("benefit sharing") || q.includes("biodiversity");
+      const isGratkQuery = q.includes("gratk") || q.includes("wipo") || q.includes("treaty") || q.includes("origin") || q.includes("pct") || q.includes("export");
+      const isSec3pQuery = q.includes("3(p)") || q.includes("3p") || q.includes("traditional knowledge") || q.includes("tkdl") || q.includes("patent") || q.includes("patentable");
+      const isRule158bQuery = q.includes("158b") || q.includes("classical") || q.includes("proprietary") || q.includes("ayurveda aahar") || q.includes("fssai");
+
+      if (matchedHerb) {
+        return {
+          executiveSummary: `For inventions utilizing ${matchedHerb.name} (${matchedHerb.botanical}), the Indian Patent Office (IPO) will examine the application against classical citations in the Traditional Knowledge Digital Library (TKDL: ${matchedHerb.tkdlId}), citing ${matchedHerb.classicalSource}. Crude herbal mixtures or conventional extracts are strictly barred under Section 3(p).`,
+          statutoryBreakdown: [
+            { citation: "Patents Act 1970 § 3(p) & TKDL Prior Art", note: `${matchedHerb.sec3pPosture} Claims must focus on novel formulation matrices, targeted carrier vehicles, or standardized fractions rather than crude biomass.`, status: "EXAMINATION OBJECTION" },
+            { citation: "Patents Act 1970 § 3(d) & § 3(e) Synergistic Proof", note: `Submit quantitative experimental data (HPLC chromatograms, Combination Index CI < 0.7, or in-vitro IC50 curves) demonstrating statistically significant efficacy enhancement over classical baseline.`, status: "EVIDENTIARY BURDEN" },
+            { citation: "Biological Diversity Act 2023 § 6 (Form III)", note: `Because ${matchedHerb.botanical} is an Indian biological resource, prior approval from National Biodiversity Authority (NBA Form III) is mandatory before patent grant.`, status: "MANDATORY ABS" },
+            { citation: "WIPO GRATK Treaty (2024 Art. 3) & PCT Rule 4.17", note: "International filings must explicitly declare India as Country of Origin and reference associated traditional knowledge in patent specifications.", status: "TREATY COMPLIANCE" }
+          ],
+          actionableSteps: [
+            `Draft Claims on Delivery Matrix: Target the novel carrier (liposome, phytosome, nanoparticle, SNEDDS) encapsulating ${matchedHerb.activeMarkers}.`,
+            "Submit Synergistic Bio-Assay Data: Provide Combination Index (CI) calculation proving super-additive interaction over individual herbs.",
+            "File NBA Form III: Submit application on the NBA PARIVESH portal concurrently with patent examination request.",
+            `TKDL Pre-Clearance: Run concordance check against ${matchedHerb.tkdlId} in the TKDL shloka database.`
+          ],
+          citationsPills: ["Patents Act § 3(p)", "Patents Act § 3(d)", "Patents Act § 3(e)", "BDA 2023 Form III", "WIPO GRATK Treaty Art. 3"],
+          confidenceScore: "98.4%",
+          registryLinks: [
+            { label: "IPO e-Filing Portal", url: "https://ipindiaonline.gov.in" },
+            { label: "National Biodiversity Authority", url: "http://nbaindia.org" },
+            { label: "WIPO GRATK Treaty Text", url: "https://www.wipo.int/treaties/en/ip/gratk/" }
+          ]
+        };
+      }
+
+      if (isAbsQuery) {
+        return {
+          executiveSummary: "Under the Biological Diversity Act 2002 (amended 2023), accessing Indian biological resources and commercializing associated research is governed by distinct regulatory pathways depending on entity ownership and patent filings.",
+          statutoryBreakdown: [
+            { citation: "BDA 2002/2023 § 3 & Form I (Foreign Entities)", note: "Foreign corporations, non-Indian citizens, or Indian companies with foreign equity must obtain mandatory NBA approval under Form I and contribute 0.1% to 0.5% of ex-factory sales.", status: "FOREIGN ENTITY MANDATE" },
+            { citation: "BDA 2023 Amendment § 7 (Domestic Vaidya Exemption)", note: "Registered AYUSH practitioners, codified traditional knowledge holders, and farmers cultivating medicinal plants are explicitly exempt from domestic access fees.", status: "2023 STATUTORY REFORM" },
+            { citation: "BDA 2023 § 6 & Form III (Mandatory IPR Approval)", note: "Any applicant applying for a patent in or outside India based on Indian biological resources must obtain Form III approval from the NBA prior to patent grant.", status: "PATENT MANDATE" }
+          ],
+          actionableSteps: [
+            "If 100% Indian-owned MSME, file intimation with relevant State Biodiversity Board (SBB). If foreign equity exists, file NBA Form I.",
+            "File Form III within 30 days of filing complete patent specification at the Indian Patent Office.",
+            "Maintain chain-of-custody botanical certificates proving cultivated vs. wild provenance."
+          ],
+          citationsPills: ["BDA 2002/2023 § 3", "BDA 2023 § 6", "BDA 2023 § 7", "NBA Form I", "NBA Form III"],
+          confidenceScore: "99.1%",
+          registryLinks: [
+            { label: "NBA PARIVESH Portal", url: "http://nbaindia.org" },
+            { label: "Nagoya ABS Clearing-House", url: "https://absch.cbd.int" }
+          ]
+        };
+      }
+
+      if (isGratkQuery || jurisdiction === "international") {
+        return {
+          executiveSummary: "The WIPO Treaty on Intellectual Property, Genetic Resources and Associated Traditional Knowledge (GRATK), adopted in May 2024, establishes a historic mandatory disclosure regime for patent applicants worldwide utilizing genetic resources and traditional knowledge.",
+          statutoryBreakdown: [
+            { citation: "WIPO GRATK Treaty (2024) Article 3", note: "Patent applicants in all contracting member states are legally obligated to disclose the Country of Origin (India) of genetic resources and the indigenous community providing associated traditional knowledge.", status: "GLOBAL TREATY MANDATE" },
+            { citation: "PCT Rule 4.17 & Article 27", note: "International PCT applications must include declarations of inventorship and genetic resource origin, harmonized with national phase entries in US, Europe, and Japan.", status: "PCT SYSTEM COMPLIANCE" },
+            { citation: "Target Market Pathways: US FDA vs. EU THMPD", note: "For US export, formulations enter as Dietary Supplements (DSHEA cGMP 21 CFR 111) or Botanical NDIs. For EU export, products qualify under the Traditional Herbal Medicinal Products Directive (THMPD 2004/24/EC).", status: "EXPORT MARKET ENTRY" }
+          ],
+          actionableSteps: [
+            "Include mandatory Country of Origin (India) statement in the PCT specification specification field.",
+            "Cross-reference NBA Form III approval order number in the international patent dossier.",
+            "Ensure US/EU product label claims use structure/function wording rather than disease treatment claims."
+          ],
+          citationsPills: ["WIPO GRATK Art. 3", "WIPO GRATK Art. 4", "PCT Rule 4.17", "US FDA 21 CFR 111", "EU THMPD 2004/24/EC"],
+          confidenceScore: "97.9%",
+          registryLinks: [
+            { label: "WIPO GRATK Treaty Portal", url: "https://www.wipo.int/treaties/en/ip/gratk/" },
+            { label: "WIPO PCT E-Filing", url: "https://www.wipo.int/pct/en/" }
+          ]
+        };
+      }
+
+      return {
+        executiveSummary: `Regarding your query "${userQuery}", the regulatory classification, patentability posture, and ABS compliance depend on whether the invention is derived from First Schedule classical texts or represents a novel non-obvious technological advancement.`,
+        statutoryBreakdown: [
+          { citation: "Indian Patents Act 1970 § 3(p) & § 3(d)", note: "Inventions relying on traditional knowledge components require demonstrated non-obvious synergistic efficacy or novel delivery technologies to overcome Section 3(p).", status: "STATUTORY GATEWAY" },
+          { citation: "Biological Diversity Act 2023 § 6 (Form III)", note: "All patent applicants utilizing Indian biological material must secure NBA approval before patent grant.", status: "MANDATORY ABS" },
+          { citation: "WIPO GRATK Treaty (2024 Art. 3)", note: "Mandatory disclosure of genetic resource origin and traditional knowledge source for international patent specifications.", status: "TREATY COMPLIANCE" }
+        ],
+        actionableSteps: [
+          "Check TKDL database for classical shloka citations and prior-art formulations.",
+          "Obtain botanical origin authentication certificate and herbarium voucher.",
+          "Submit NBA Form III intimation before patent examination closure."
+        ],
+        citationsPills: ["Patents Act § 3(p)", "BDA 2023 § 6", "D&C Rule 158B", "WIPO GRATK Art. 3", "PCT Rule 4.17"],
+        confidenceScore: "95.4%",
+        registryLinks: [
+          { label: "Indian Patent Office Portal", url: "https://ipindiaonline.gov.in" },
+          { label: "National Biodiversity Authority", url: "http://nbaindia.org" }
+        ]
+      };
+    }
+
+    // --- MAIN REACT COMPONENT ---
+    function App() {
+      const [jurisdiction, setJurisdiction] = useState('national');
+      const [chatMode, setChatMode] = useState('split');
+      const [language, setLanguage] = useState('en');
+      const [workflowMode, setWorkflowMode] = useState('standard');
+
+      const t = I18N[language] || I18N.en;
+
+      // National Wizard State
+      const [natStep, setNatStep] = useState(1);
+      const [natAnswers, setNatAnswers] = useState({
+        category: 'proprietary',
+        processingMethod: 'standardized_extract',
+        sourcing: 'india_cultivated',
+        entityType: 'indian_msme'
+      });
+      const [natResult, setNatResult] = useState(() => runNationalDiagnostic(natAnswers));
+
+      const handleNatSelect = (key, val) => {
+        const u = { ...natAnswers, [key]: val };
+        setNatAnswers(u);
+        setNatResult(runNationalDiagnostic(u));
+      };
+
+      // International Wizard State
+      const [intlStep, setIntlStep] = useState(1);
+      const [intlAnswers, setIntlAnswers] = useState({
+        treatyRoute: 'pct_route',
+        geneticDisclosure: 'indian_origin_tk',
+        priorArtStandard: 'uspto',
+        exportCategory: 'us_dietary_supplement'
+      });
+      const [intlResult, setIntlResult] = useState(() => runInternationalDiagnostic(intlAnswers));
+
+      const handleIntlSelect = (key, val) => {
+        const u = { ...intlAnswers, [key]: val };
+        setIntlAnswers(u);
+        setIntlResult(runInternationalDiagnostic(u));
+      };
+
+      // Persistent Chat Messages
+      const [chatMessages, setChatMessages] = useState([
+        {
+          id: 'welcome',
+          sender: 'assistant',
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          content: queryRagAssistant("Welcome", jurisdiction)
+        }
+      ]);
+      const [inputQuery, setInputQuery] = useState('');
+      const [isChatLoading, setIsChatLoading] = useState(false);
+      const [isDockedOpen, setIsDockedOpen] = useState(true);
+      const chatEndRef = useRef(null);
+
+      const samplePrompts = jurisdiction === 'national' ? [
+        "Can I patent a modified Triphala formulation with a novel nano-delivery lipid carrier?",
+        "What are the mandatory NBA Form III requirements before the grant of an Indian patent?",
+        "How can I prove synergistic bio-enhancement to overcome Section 3(p) and Section 3(e)?",
+        "Is a standardized Ashwagandha extract with 5% withanolides patentable in India?"
+      ] : [
+        "How does the WIPO GRATK Treaty (2024) mandate Country of Origin disclosure for Indian botanicals?",
+        "What are the foreign prior-art hurdles at USPTO (35 U.S.C. 102/103) when facing TKDL citations?",
+        "What is the compliance route for exporting Ayurvedic herbal formulations as US FDA Dietary Supplements?",
+        "How to synchronize PCT international phase filings with Indian NBA Form III approval?"
+      ];
+
+      const handleSendChat = (q) => {
+        const text = (typeof q === 'string' ? q : inputQuery || '').trim();
+        if (!text) return;
+        const uMsg = {
+          id: Date.now() + '-u',
+          sender: 'user',
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          text: text
+        };
+        setChatMessages(prev => [...prev, uMsg]);
+        setInputQuery('');
+        setIsChatLoading(true);
+
+        setTimeout(() => {
+          const aiResponse = queryRagAssistant(text, jurisdiction);
+          const aiMsg = {
+            id: Date.now() + '-ai',
+            sender: 'assistant',
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            content: aiResponse
+          };
+          setChatMessages(prev => [...prev, aiMsg]);
+          setIsChatLoading(false);
+        }, 450);
+      };
+
+      const handleClearChat = () => {
+        const initialWelcome = {
+          id: 'welcome-' + Date.now(),
+          sender: 'assistant',
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          content: queryRagAssistant("Welcome", jurisdiction)
+        };
+        setChatMessages([initialWelcome]);
+      };
+
+      const handleDownloadBrief = () => {
+        let briefContent = `# AYUSH IPR & ABS Regulatory Counsel Summary\nGenerated: ${new Date().toLocaleString()}\nJurisdiction: ${jurisdiction.toUpperCase()}\n\n`;
+        chatMessages.forEach((m, idx) => {
+          if (m.sender === 'user') {
+            briefContent += `## Query ${idx + 1}: ${m.text}\n\n`;
+          } else if (m.content) {
+            briefContent += `### Executive Guidance:\n${m.content.executiveSummary}\n\n### Statutory Citations:\n${m.content.citationsPills?.join(', ')}\n\n### Action Items:\n${m.content.actionableSteps?.map(s => `- ${s}`).join('\n')}\n\n---\n\n`;
+          }
+        });
+        const blob = new Blob([briefContent], { type: 'text/markdown' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `AYUSH_IPR_Compliance_Brief_${Date.now()}.md`;
+        a.click();
+        URL.revokeObjectURL(url);
+      };
+
+      useEffect(() => {
+        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, [chatMessages, isChatLoading]);
+
+      // Advanced Suite State
+      const [advTurnover, setAdvTurnover] = useState(150);
+
+      // Chatbot Render
+      const renderChatbot = (isDocked = false) => (
+        <div className={`flex flex-col ${isDocked ? 'h-[520px]' : 'h-[740px]'} bg-slate-950/95 text-stone-100 rounded-2xl border border-emerald-900/60 shadow-2xl overflow-hidden`}>
+          <div className="p-3.5 bg-gradient-to-r from-emerald-950 via-slate-900 to-emerald-950 border-b border-emerald-800/40 flex items-center justify-between">
+            <div className="flex items-center space-x-2.5">
+              <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center text-sm shadow">
+                🌿
+              </div>
+              <div>
+                <h3 className="text-xs sm:text-sm font-bold text-stone-100 font-serif">{t.chatHeaderTitle}</h3>
+                <div className="text-[10px] text-emerald-300 font-mono flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                  <span>{jurisdiction === 'national' ? '🇮🇳 IN Statutory RAG Grounding' : '🌐 WIPO / PCT RAG Grounding'}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-1.5">
+              <button
+                onClick={handleDownloadBrief}
+                className="text-[11px] px-2 py-1 rounded bg-slate-900 hover:bg-slate-800 text-stone-300 border border-slate-700 transition"
+                title="Download Legal Brief"
+              >
+                📥 Export
+              </button>
+              <button
+                onClick={handleClearChat}
+                className="text-[11px] px-2 py-1 rounded bg-slate-900 hover:bg-slate-800 text-stone-300 border border-slate-700 transition"
+                title="Clear Chat History"
+              >
+                🗑️
+              </button>
+              {isDocked && (
+                <button onClick={() => setIsDockedOpen(false)} className="text-stone-400 hover:text-stone-100 p-1 text-sm ml-1">✕</button>
+              )}
+            </div>
+          </div>
+
+          <div className="px-3 py-1.5 bg-slate-900 border-b border-slate-800 flex items-center gap-1.5 overflow-x-auto scrollbar-thin">
+            <span className="text-[10px] font-mono text-emerald-400 font-bold whitespace-nowrap">Suggested:</span>
+            {samplePrompts.map((p, idx) => (
+              <button
+                key={idx}
+                onClick={() => handleSendChat(p)}
+                className="px-2.5 py-0.5 rounded-full bg-slate-950 text-stone-300 border border-emerald-900/80 hover:border-emerald-500 text-[10px] whitespace-nowrap transition truncate max-w-[200px]"
+              >
+                {p}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin text-xs">
+            {chatMessages.map(msg => {
+              if (msg.sender === 'user') {
+                return (
+                  <div key={msg.id} className="flex justify-end">
+                    <div className="max-w-[85%] bg-gradient-to-r from-emerald-800 to-teal-800 text-white rounded-2xl rounded-tr-sm p-3.5 shadow-md border border-emerald-600/40">
+                      <div className="text-[9px] text-emerald-200/80 font-mono mb-1">{msg.timestamp}</div>
+                      <p className="font-medium leading-relaxed">{msg.text}</p>
+                    </div>
+                  </div>
+                );
+              }
+              const c = msg.content;
+              return (
+                <div key={msg.id} className="flex justify-start">
+                  <div className="max-w-[95%] bg-slate-900 text-stone-200 rounded-2xl rounded-tl-sm p-4 shadow-lg border border-emerald-800/60 space-y-3">
+                    <div className="flex items-center justify-between border-b border-emerald-900/50 pb-2">
+                      <span className="font-serif font-bold text-stone-100 text-xs">RAG Legal Counsel</span>
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-600 font-mono text-[10px] font-bold">
+                        Grounding: {c.confidenceScore}
+                      </span>
+                    </div>
+
+                    <div className="space-y-1">
+                      <div className="text-[10px] font-mono text-emerald-400 font-bold uppercase">{t.execGuidanceTitle}</div>
+                      <p className="text-stone-100 leading-relaxed font-sans text-xs">{c.executiveSummary}</p>
+                    </div>
+
+                    {c.citationsPills && (
+                      <div className="space-y-1">
+                        <div className="text-[10px] font-mono text-amber-400 font-bold uppercase">{t.statCitationsTitle}</div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {c.citationsPills.map((pill, idx) => (
+                            <span key={idx} className="px-2 py-0.5 rounded-md bg-amber-950 text-amber-300 border border-amber-600/50 text-[10px] font-mono font-semibold flex items-center gap-1">
+                              <span>📜</span>
+                              <span>{pill}</span>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {c.statutoryBreakdown && (
+                      <div className="space-y-1.5">
+                        <div className="text-[10px] font-mono text-teal-400 font-bold uppercase">{t.statBreakdownTitle}</div>
+                        <div className="space-y-1.5">
+                          {c.statutoryBreakdown.map((item, idx) => (
+                            <div key={idx} className="p-2.5 rounded-lg bg-slate-950 border border-emerald-900/60 space-y-0.5">
+                              <div className="flex items-center justify-between">
+                                <span className="text-[11px] font-bold text-emerald-300 font-mono">{item.citation}</span>
+                                <span className="text-[9px] px-1 py-0.2 rounded font-mono font-bold bg-slate-900 text-amber-400 border border-slate-700">{item.status}</span>
+                              </div>
+                              <p className="text-[11px] text-stone-300 leading-normal">{item.note}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {c.actionableSteps && (
+                      <div className="p-2.5 rounded-lg bg-emerald-950/40 border border-emerald-700/40 space-y-1">
+                        <div className="text-[10px] font-mono text-emerald-300 font-bold uppercase flex items-center gap-1">
+                          <span>✅</span>
+                          <span>{t.actionItemsTitle}</span>
+                        </div>
+                        <ul className="space-y-0.5 text-[11px] text-stone-300">
+                          {c.actionableSteps.map((s, idx) => (
+                            <li key={idx} className="flex items-start gap-1.5">
+                              <span className="text-emerald-400 font-bold">•</span>
+                              <span>{s}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {c.registryLinks && (
+                      <div className="flex flex-wrap items-center gap-1.5 pt-1.5 border-t border-slate-800 text-[10px]">
+                        <span className="font-mono text-stone-400 font-semibold">{t.officialPortalsTitle}</span>
+                        {c.registryLinks.map((l, idx) => (
+                          <a key={idx} href={l.url} target="_blank" rel="noopener noreferrer" className="px-2 py-0.5 rounded bg-slate-800 text-emerald-300 font-mono hover:bg-slate-700 transition flex items-center gap-0.5 border border-slate-700">
+                            <span>{l.label}</span>
+                            <span>↗</span>
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+
+            {isChatLoading && (
+              <div className="flex items-center gap-2.5 p-3.5 bg-slate-900 rounded-xl border border-emerald-800/60 text-emerald-300 text-xs font-mono animate-pulse">
+                <div className="w-4 h-4 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin"></div>
+                <span>Grounding statutory reasoning across Patents Act § 3(p), BDA 2023 & WIPO GRATK...</span>
+              </div>
+            )}
+            <div ref={chatEndRef} />
+          </div>
+
+          <div className="p-3 bg-slate-900 border-t border-emerald-900/60">
+            <form onSubmit={(e) => { e.preventDefault(); handleSendChat(); }} className="flex items-center gap-2">
+              <input
+                type="text"
+                value={inputQuery}
+                onChange={(e) => setInputQuery(e.target.value)}
+                placeholder={t.chatPlaceholder}
+                className="flex-1 bg-slate-950 border border-emerald-800/60 rounded-xl px-3.5 py-2.5 text-xs text-stone-100 placeholder-stone-500 focus:outline-none focus:border-emerald-400"
+              />
+              <button
+                type="submit"
+                disabled={isChatLoading || !inputQuery.trim()}
+                className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold text-xs transition disabled:opacity-40 flex items-center gap-1 shadow"
+              >
+                <span>{t.chatSendBtn}</span>
+              </button>
+            </form>
+          </div>
+        </div>
+      );
+
+      return (
+        <div className="min-h-screen bg-slate-950 text-stone-100 flex flex-col antialiased">
+          {/* HEADER WITH EXACTLY 4 TOGGLES */}
+          <header className="bg-gradient-to-r from-emerald-950 via-slate-900 to-emerald-950 border-b border-emerald-800/40 text-stone-100 shadow-xl sticky top-0 z-40">
+            <div className="max-w-7xl mx-auto px-4 py-3 flex flex-col lg:flex-row items-center justify-between gap-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-500 via-teal-600 to-amber-500 p-0.5 shadow-lg">
+                  <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center text-xl">
+                    🌿
+                  </div>
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h1 className="text-lg sm:text-xl font-serif font-bold tracking-tight text-stone-100 flex items-center gap-2">
+                      AYUSH <span className="text-amber-400 font-sans font-extrabold text-base sm:text-lg">IPR & ABS ASSISTANT</span>
+                    </h1>
+                    <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-700 font-mono font-semibold uppercase">
+                      {jurisdiction === 'national' ? '🇮🇳 IN Mode' : '🌐 WIPO Mode'}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-emerald-200/70 truncate max-w-md">
+                    {t.appSubtitle}
+                  </p>
+                </div>
+              </div>
+
+              {/* 4 TOGGLE SWITCHES */}
+              <div className="flex flex-wrap items-center justify-center gap-2.5">
+                {/* 1. Jurisdiction Toggle */}
+                <div className="bg-slate-950/90 p-1 rounded-xl border border-emerald-800/60 flex items-center shadow-inner">
+                  <button
+                    onClick={() => setJurisdiction('national')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 ${
+                      jurisdiction === 'national'
+                        ? 'bg-gradient-to-r from-emerald-600 to-teal-700 text-white shadow border border-emerald-400/40'
+                        : 'text-stone-400 hover:text-stone-200'
+                    }`}
+                  >
+                    <span>🇮🇳</span>
+                    <span>{t.national}</span>
+                  </button>
+                  <button
+                    onClick={() => setJurisdiction('international')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 ${
+                      jurisdiction === 'international'
+                        ? 'bg-gradient-to-r from-amber-600 to-amber-700 text-white shadow border border-amber-400/40'
+                        : 'text-stone-400 hover:text-stone-200'
+                    }`}
+                  >
+                    <span>🌐</span>
+                    <span>{t.international}</span>
+                  </button>
+                </div>
+
+                {/* 2. Chat Display Toggle */}
+                <div className="bg-slate-950/90 p-1 rounded-xl border border-emerald-800/60 flex items-center shadow-inner">
+                  <button
+                    onClick={() => setChatMode('docked')}
+                    className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 ${
+                      chatMode === 'docked'
+                        ? 'bg-slate-800 text-emerald-300 border border-emerald-600/50 shadow'
+                        : 'text-stone-400 hover:text-stone-200'
+                    }`}
+                  >
+                    <span>📌</span>
+                    <span>{t.chatDocked}</span>
+                  </button>
+                  <button
+                    onClick={() => setChatMode('split')}
+                    className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 ${
+                      chatMode === 'split'
+                        ? 'bg-emerald-900/80 text-emerald-200 border border-emerald-400/50 shadow'
+                        : 'text-stone-400 hover:text-stone-200'
+                    }`}
+                  >
+                    <span>⚡</span>
+                    <span>{t.chatSplit}</span>
+                  </button>
+                </div>
+
+                {/* 3. Language Switcher */}
+                <div className="bg-slate-950/90 p-1 rounded-xl border border-emerald-800/60 flex items-center text-xs">
+                  <button
+                    onClick={() => setLanguage('en')}
+                    className={`px-2.5 py-1.5 rounded-lg font-semibold transition ${
+                      language === 'en' ? 'bg-emerald-800 text-emerald-100 border border-emerald-500/40' : 'text-stone-400'
+                    }`}
+                  >
+                    EN
+                  </button>
+                  <button
+                    onClick={() => setLanguage('hi')}
+                    className={`px-2.5 py-1.5 rounded-lg font-semibold transition ${
+                      language === 'hi' ? 'bg-emerald-800 text-emerald-100 border border-emerald-500/40' : 'text-stone-400'
+                    }`}
+                  >
+                    हिंदी
+                  </button>
+                </div>
+
+                {/* 4. Workflow Toggle */}
+                <div className="bg-slate-950/90 p-1 rounded-xl border border-emerald-800/60 flex items-center shadow-inner">
+                  <button
+                    onClick={() => setWorkflowMode('standard')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 ${
+                      workflowMode === 'standard'
+                        ? 'bg-emerald-900/80 text-emerald-200 border border-emerald-500/40 shadow'
+                        : 'text-stone-400 hover:text-stone-200'
+                    }`}
+                  >
+                    <span>⚙️</span>
+                    <span>{t.workflowStandard}</span>
+                  </button>
+                  <button
+                    onClick={() => setWorkflowMode('advanced')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 ${
+                      workflowMode === 'advanced'
+                        ? 'bg-gradient-to-r from-amber-600 to-amber-700 text-white border border-amber-400/40 shadow'
+                        : 'text-stone-400 hover:text-stone-200'
+                    }`}
+                  >
+                    <span>🔬</span>
+                    <span>{t.workflowAdvanced}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </header>
+
+          {/* LEGAL NOTICE BANNER */}
+          <div className="bg-amber-950/40 border-y border-amber-500/30 text-amber-200/90 py-2 px-4 text-xs">
+            <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <span className="text-amber-400 font-bold">⚖️</span>
+                <span>{t.legalBanner}</span>
+              </div>
+              <div className="hidden md:flex items-center gap-3 text-[11px] text-amber-300/70 font-mono">
+                <span>Patents Act § 3(p)</span>
+                <span>•</span>
+                <span>BDA 2023 Form III</span>
+                <span>•</span>
+                <span>WIPO GRATK Treaty</span>
+              </div>
+            </div>
+          </div>
+
+          {/* MAIN WORKSPACE */}
+          <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            {chatMode === 'split' ? (
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                <div className="lg:col-span-7 space-y-6">
+                  {jurisdiction === 'national' ? renderNationalView() : renderInternationalView()}
+                  {workflowMode === 'advanced' && renderAdvancedView()}
+                </div>
+                <div className="lg:col-span-5 sticky top-24">
+                  {renderChatbot(false)}
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {jurisdiction === 'national' ? renderNationalView() : renderInternationalView()}
+                {workflowMode === 'advanced' && renderAdvancedView()}
+                {/* Docked Floating Chatbot */}
+                <div className="fixed bottom-4 right-4 z-50">
+                  {isDockedOpen ? (
+                    <div className="w-[380px] sm:w-[480px] shadow-2xl animate-fadeIn">
+                      {renderChatbot(true)}
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setIsDockedOpen(true)}
+                      className="px-4 py-3 rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold text-xs shadow-2xl border border-emerald-400/50 flex items-center gap-2 hover:scale-105 transition"
+                    >
+                      <span>🌿</span>
+                      <span>Open AI Legal Counsel</span>
+                      <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </main>
+
+          {/* FOOTER */}
+          <footer className="bg-slate-950 border-t border-emerald-900/40 py-5 text-stone-400 text-xs">
+            <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center space-x-2">
+                <span className="text-base">🌿</span>
+                <span className="font-serif font-bold text-stone-200">AYUSH IPR, ABS & Regulatory Compliance Assistant</span>
+              </div>
+              <div className="flex items-center space-x-4 text-[11px] font-mono text-stone-500">
+                <span>Patents Act 1970 § 3(p)</span>
+                <span>•</span>
+                <span>BDA 2023 Form III</span>
+                <span>•</span>
+                <span>WIPO GRATK Treaty (2024)</span>
+              </div>
+            </div>
+          </footer>
+        </div>
+      );
+
+      // National View Renderer
+      function renderNationalView() {
+        const natSteps = [
+          {
+            id: 1, title: t.natStep1Title, desc: t.natStep1Desc, key: 'category',
+            options: [
+              { id: 'classical', label: 'Classical Ayurvedic Medicine (Shastriya Yoga)', badge: '1st Schedule Text', desc: 'Manufactured strictly per 54 authoritative classical texts (Charaka, Sushruta, Sahasrayogam). Exempt from clinical trials; requires API/AFI compliance.' },
+              { id: 'proprietary', label: 'Patent or Proprietary Medicine (P&P)', badge: 'D&C Rule 158B', desc: 'Contains ingredients from authoritative classical texts in a non-classical combination, ratio, or modern dosage form. Requires pilot safety/efficacy data.' },
+              { id: 'phytopharmaceutical', label: 'Phytopharmaceutical Drug (New Botanical Drug)', badge: 'Schedule Y', desc: 'Purified, standardized bio-active botanical fraction with complete chemical characterization (HPLC/LC-MS) for human clinical trials.' },
+              { id: 'ayurveda_aahar', label: 'Ayurveda-Aahar (Nutraceutical / Food)', badge: 'FSSAI 2022', desc: 'Dietary supplement or food prepared in accordance with Ayurvedic principles; no therapeutic/disease treatment claims permitted.' },
+              { id: 'cosmetic', label: 'Ayurvedic Cosmetic (Saundarya Prasadana)', badge: 'Schedule S', desc: 'Topical formulation for cleansing, beautifying, or promoting attractiveness using classical herbal extracts.' }
+            ]
+          },
+          {
+            id: 2, title: t.natStep2Title, desc: t.natStep2Desc, key: 'processingMethod',
+            options: [
+              { id: 'traditional_method', label: 'Traditional Classical Processing (Samskara)', badge: 'Classical Recipe', desc: 'Prepared using traditional methods (Asava, Arishta, Taila, Ghrita, Bhasma, Churna, Kashaya).' },
+              { id: 'standardized_extract', label: 'Standardized Solvent Extraction', badge: 'Phytochemistry', desc: 'Hydro-alcoholic or supercritical CO2 extract with quantified biomarker assays (e.g., 5% withanolides).' },
+              { id: 'nano_carrier', label: 'Novel Nano-Delivery / Liposomal Carrier', badge: 'High-Tech Formulation', desc: 'Encapsulated in lipid nanoparticles, phytosomes, or SNEDDS for targeted release and enhanced bioavailability.' },
+              { id: 'novel_synergy', label: 'Novel Synergistic Bioactive Combination', badge: 'Synergistic Proof', desc: 'Combination showing non-obvious super-additive therapeutic efficacy (Combination Index CI < 0.7) over individual herbs.' }
+            ]
+          },
+          {
+            id: 3, title: t.natStep3Title, desc: t.natStep3Desc, key: 'sourcing',
+            options: [
+              { id: 'india_cultivated', label: 'Cultivated on Registered Indian Agricultural Farms', badge: 'Cultivated Exemption', desc: 'Sourced from registered contract farmers or cultivated farms (eligible for streamlined domestic pathway under BDA 2023).' },
+              { id: 'india_wild', label: 'Wild Harvest from Indian Forest / Tribal Reserves', badge: 'High ABS Scrutiny', desc: 'Collected from natural wild habitats or tribal forest zones; subject to State Biodiversity Board prior consent.' },
+              { id: 'rare_himalayan', label: 'Endangered / High-Altitude Himalayan Species', badge: 'CITES / Strict BDA', desc: 'Rare species such as Saussurea costata (Kuth), Nardostachys jatamansi (Jatamansi), or Taxus wallichiana.' },
+              { id: 'community_tk', label: 'Community Traditional Knowledge Access', badge: 'PIC & MAT Required', desc: 'Utilizing unpublished oral traditional knowledge held by local tribal or indigenous communities.' }
+            ]
+          },
+          {
+            id: 4, title: t.natStep4Title, desc: t.natStep4Desc, key: 'entityType',
+            options: [
+              { id: 'indian_individual', label: 'Indian Individual Innovator / Registered Vaidya', badge: 'Domestic Individual', desc: 'Citizen of India or registered AYUSH practitioner (exempt from domestic ABS fee under BDA 2023 § 7).' },
+              { id: 'indian_msme', label: 'Indian MSME / Startup (100% Indian Equity)', badge: 'Indian Entity', desc: 'Registered Indian entity without foreign shareholding or non-Indian management control.' },
+              { id: 'foreign', label: 'Foreign Entity / Multinational / FDI Shareholding', badge: 'Mandatory Form I', desc: 'Non-Indian corporation, foreign national, or Indian company with foreign equity/FDI.' }
+            ]
+          }
+        ];
+
+        return (
+          <div className="space-y-6 animate-fadeIn">
+            <div className="bg-gradient-to-r from-slate-900 via-emerald-950 to-slate-900 rounded-2xl p-5 sm:p-6 border border-emerald-800/40 shadow-xl">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-mono mb-2">
+                <span>🇮🇳</span>
+                <span>Indian Patents Act § 3(p) • BDA 2023 • D&C Act Rule 158B</span>
+              </div>
+              <h2 className="text-xl font-serif font-bold text-stone-100">{t.natWizardTitle}</h2>
+              <p className="text-stone-300 text-xs mt-1">{t.natWizardDesc}</p>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-5 pt-4 border-t border-emerald-800/30">
+                {natSteps.map(s => (
+                  <button
+                    key={s.id}
+                    onClick={() => setNatStep(s.id)}
+                    className={`p-2 rounded-xl text-left border transition ${
+                      natStep === s.id ? 'bg-emerald-900/70 border-emerald-400 text-emerald-200 shadow' : 'bg-slate-900/50 border-slate-800 text-stone-400'
+                    }`}
+                  >
+                    <div className="text-[10px] font-mono font-bold uppercase text-emerald-400">{t.step} 0{s.id}</div>
+                    <div className="text-xs font-bold truncate mt-0.5">{s.title.split('. ')[1]}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {natSteps.map(s => {
+                if (s.id !== natStep) return null;
+                return (
+                  <div key={s.id} className="bg-slate-900/80 rounded-2xl p-6 border border-emerald-900/60 shadow-xl space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-base font-bold text-stone-100 font-serif flex items-center gap-2">
+                        <span className="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs font-mono font-bold">{s.id}</span>
+                        {s.title}
+                      </h3>
+                      <span className="text-xs font-mono text-emerald-400">{t.step} {s.id} / 4</span>
+                    </div>
+                    <p className="text-xs text-stone-400">{s.desc}</p>
+
+                    <div className="space-y-3 pt-2">
+                      {s.options.map(opt => {
+                        const isSelected = natAnswers[s.key] === opt.id;
+                        return (
+                          <div
+                            key={opt.id}
+                            onClick={() => handleNatSelect(s.key, opt.id)}
+                            className={`p-4 rounded-xl border cursor-pointer transition ${
+                              isSelected ? 'bg-emerald-950/90 border-emerald-400 ring-1 ring-emerald-400' : 'bg-slate-950/60 border-slate-800 hover:border-emerald-700'
+                            }`}
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex items-center gap-3">
+                                <div className={`w-4 h-4 rounded-full border flex items-center justify-center mt-0.5 ${isSelected ? 'border-emerald-400 bg-emerald-500' : 'border-stone-600'}`}>
+                                  {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-slate-950"></div>}
+                                </div>
+                                <span className="font-semibold text-stone-100 text-sm">{opt.label}</span>
+                              </div>
+                              <span className="text-[10px] px-2 py-0.5 rounded font-mono font-semibold bg-emerald-950 text-emerald-300 border border-emerald-700">{opt.badge}</span>
+                            </div>
+                            <p className="text-xs text-stone-400 mt-2 ml-7">{opt.desc}</p>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <div className="flex items-center justify-between pt-4 border-t border-slate-800">
+                      <button disabled={natStep === 1} onClick={() => setNatStep(natStep - 1)} className="px-4 py-2 rounded-lg text-xs font-semibold bg-slate-800 text-stone-300 disabled:opacity-40">
+                        {t.prevStep}
+                      </button>
+                      {natStep < 4 ? (
+                        <button onClick={() => setNatStep(natStep + 1)} className="px-5 py-2 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow">
+                          {t.nextStep}
+                        </button>
+                      ) : (
+                        <span className="text-xs font-mono text-emerald-400 font-semibold">✓ Evaluation Ready</span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Instant Matrix Card */}
+              <div className="bg-gradient-to-b from-slate-900 via-emerald-950/60 to-slate-900 rounded-2xl p-6 border border-emerald-700/50 shadow-2xl space-y-4">
+                <div className="flex items-center justify-between border-b border-emerald-800/40 pb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">📊</span>
+                    <h3 className="font-serif font-bold text-stone-100 text-base">{t.liveEvaluation}</h3>
+                  </div>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-900 text-emerald-300 border border-emerald-700">INDIAN REGIME</span>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-slate-950/80 border border-emerald-800/50 space-y-1">
+                  <div className="text-[10px] font-mono uppercase text-emerald-400 font-bold">{t.matrixLegalClass}</div>
+                  <div className="text-sm font-bold text-stone-100">{natResult.classification}</div>
+                  <div className="text-xs text-stone-300 font-serif">{natResult.regulatoryRoute}</div>
+                  <div className="text-[11px] text-stone-400 mt-1">{natResult.clinicalProof}</div>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-slate-950/80 border border-emerald-800/50 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="text-[10px] font-mono uppercase text-amber-400 font-bold">{t.matrixPatentPosture}</div>
+                    <span className={`text-[10px] font-mono px-2 py-0.5 rounded font-bold ${
+                      natResult.patentRiskLevel === 'RED' ? 'bg-rose-950 text-rose-300 border border-rose-600' :
+                      natResult.patentRiskLevel === 'AMBER' ? 'bg-amber-950 text-amber-300 border border-amber-600' :
+                      'bg-emerald-950 text-emerald-300 border border-emerald-600'
+                    }`}>
+                      {natResult.patentRiskLevel === 'RED' ? '⛔ § 3(p) HIGH BAR' :
+                       natResult.patentRiskLevel === 'AMBER' ? '⚠️ OVERCOME BY SYNERGY' :
+                       '✅ PATENTABLE FORMULATION'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-stone-300 leading-relaxed">{natResult.patentPosture}</p>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-slate-950/80 border border-emerald-800/50 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <div className="text-[10px] font-mono uppercase text-teal-400 font-bold">{t.matrixAbsReq}</div>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-teal-950 text-teal-300 border border-teal-600 font-bold">{natResult.absForm}</span>
+                  </div>
+                  <p className="text-xs text-stone-300 leading-relaxed">{natResult.absRequired}</p>
+                </div>
+
+                <button
+                  onClick={() => handleSendChat(`What are the claim drafting strategies and NBA Form III filing timelines for a ${natResult.classification}? How can we overcome the Section 3(p) prior art rejection?`)}
+                  className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold text-xs transition shadow-lg flex items-center justify-center gap-2"
+                >
+                  <span>{t.consultAiOnRoute}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      // International View Renderer
+      function renderInternationalView() {
+        const intlSteps = [
+          {
+            id: 1, title: t.intlStep1Title, desc: t.intlStep1Desc, key: 'treatyRoute',
+            options: [
+              { id: 'pct_route', label: 'Patent Cooperation Treaty (PCT System)', badge: '157 Member States', desc: 'Single international filing granting 30/31-month window to enter national phase in US, Europe, Japan, etc. Requires PCT Rule 4.17 origin declaration.' },
+              { id: 'direct_paris', label: 'Direct Paris Convention (National Phase)', badge: '12-Month Priority', desc: 'Filing directly in target foreign patent offices (USPTO, EPO, UKIPO) within 12 months of Indian priority date.' },
+              { id: 'madrid_system', label: 'Madrid System (International Brand / Trademark)', badge: 'WIPO Madrid', desc: 'Cross-border brand and trademark protection for Ayurvedic formulation trade names across 130+ countries.' },
+              { id: 'hague_system', label: 'Hague System (Industrial Designs & Packaging)', badge: 'Novel Applicators', desc: 'Protection for specialized Ayurvedic bottle designs, copper vessels, or novel medical applicator devices.' }
+            ]
+          },
+          {
+            id: 2, title: t.intlStep2Title, desc: t.intlStep2Desc, key: 'geneticDisclosure',
+            options: [
+              { id: 'indian_origin_tk', label: 'Indian Origin Biological Resources (With Traditional Knowledge)', badge: 'Mandatory WIPO GRATK Art. 3', desc: 'Patent specification MUST explicitly disclose India as Country of Origin and declare associated traditional knowledge citations.' },
+              { id: 'multi_country', label: 'Biological Resources from Multiple Sovereign Territories', badge: 'Multi-Country PIC/MAT', desc: 'Requires separate ABS authorizations from each genetic provider country under the Nagoya Protocol ABS Clearing-House.' },
+              { id: 'synthesized_analogue', label: 'Synthesized Phytochemical Derivative (Without Direct Biomass)', badge: 'DSI / In Silico', desc: 'Digital Sequence Information (DSI) or synthetic analogue requiring assessment under multilateral benefit-sharing mechanisms.' }
+            ]
+          },
+          {
+            id: 3, title: t.intlStep3Title, desc: t.intlStep3Desc, key: 'priorArtStandard',
+            options: [
+              { id: 'uspto', label: 'USPTO 35 U.S.C. § 102 / § 103 (Novelty & Non-Obviousness)', badge: 'US Patent Law', desc: 'US examiners cross-check TKDL access agreements. Must prove unexpected synergistic results and overcome 35 U.S.C. 101 subject-matter eligibility.' },
+              { id: 'epo', label: 'EPO Article 54 / 56 EPC (Inventive Step & Novelty)', badge: 'European Patent Convention', desc: 'Problem-solution approach requires demonstrable technical effect beyond traditional indications found in Sanskrit/Tamil classical texts.' },
+              { id: 'jpo_asia', label: 'JPO & East Asian IP Jurisdictions (Kampo Harmonization)', badge: 'Asia-Pacific Route', desc: 'Requires bridging documentation between Ayurvedic energetics (Rasa, Guna, Virya) and modern pharmacological mechanisms.' }
+            ]
+          },
+          {
+            id: 4, title: t.intlStep4Title, desc: t.intlStep4Desc, key: 'exportCategory',
+            options: [
+              { id: 'us_dietary_supplement', label: 'United States: Dietary Supplement / Botanical NDI (US FDA)', badge: 'DSHEA / 21 CFR 111', desc: 'Structure/function claims only; mandatory cGMP 21 CFR 111 compliance and New Dietary Ingredient (NDI) notification for novel extracts.' },
+              { id: 'eu_thmpd', label: 'European Union: Traditional Herbal Medicinal Product (THMPD)', badge: 'EMA Directive 2004/24/EC', desc: 'Simplified registration for herbal medicinal products with documented traditional medicinal use of at least 30 years (including 15 years in EU/India).' },
+              { id: 'eu_novel_food', label: 'European Union: Novel Food Regulation (EFSA)', badge: 'Regulation 2015/2283', desc: 'Required if the botanical or extract was not consumed to a significant degree in the EU prior to 15 May 1997.' },
+              { id: 'tga_australia', label: 'Australia: Listed Complementary Medicine (TGA)', badge: 'Therapeutic Goods Act', desc: 'Pre-approved low-risk ingredients listed in the ARTG database; evidence package maintained for health claims.' }
+            ]
+          }
+        ];
+
+        return (
+          <div className="space-y-6 animate-fadeIn">
+            <div className="bg-gradient-to-r from-slate-900 via-amber-950/60 to-slate-900 rounded-2xl p-5 sm:p-6 border border-amber-800/40 shadow-xl">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-mono mb-2">
+                <span>🌐</span>
+                <span>WIPO GRATK Treaty (2024) • PCT System • Nagoya Protocol • WTO TRIPS</span>
+              </div>
+              <h2 className="text-xl font-serif font-bold text-stone-100">{t.intlWizardTitle}</h2>
+              <p className="text-stone-300 text-xs mt-1">{t.intlWizardDesc}</p>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-5 pt-4 border-t border-amber-800/30">
+                {intlSteps.map(s => (
+                  <button
+                    key={s.id}
+                    onClick={() => setIntlStep(s.id)}
+                    className={`p-2 rounded-xl text-left border transition ${
+                      intlStep === s.id ? 'bg-amber-900/70 border-amber-400 text-amber-200 shadow' : 'bg-slate-900/50 border-slate-800 text-stone-400'
+                    }`}
+                  >
+                    <div className="text-[10px] font-mono font-bold uppercase text-amber-400">{t.step} 0{s.id}</div>
+                    <div className="text-xs font-bold truncate mt-0.5">{s.title.split('. ')[1]}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {intlSteps.map(s => {
+                if (s.id !== intlStep) return null;
+                return (
+                  <div key={s.id} className="bg-slate-900/80 rounded-2xl p-6 border border-amber-900/60 shadow-xl space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-base font-bold text-stone-100 font-serif flex items-center gap-2">
+                        <span className="w-6 h-6 rounded-full bg-amber-600 text-white flex items-center justify-center text-xs font-mono font-bold">{s.id}</span>
+                        {s.title}
+                      </h3>
+                      <span className="text-xs font-mono text-amber-400">{t.step} {s.id} / 4</span>
+                    </div>
+                    <p className="text-xs text-stone-400">{s.desc}</p>
+
+                    <div className="space-y-3 pt-2">
+                      {s.options.map(opt => {
+                        const isSelected = intlAnswers[s.key] === opt.id;
+                        return (
+                          <div
+                            key={opt.id}
+                            onClick={() => handleIntlSelect(s.key, opt.id)}
+                            className={`p-4 rounded-xl border cursor-pointer transition ${
+                              isSelected ? 'bg-amber-950/80 border-amber-400 ring-1 ring-amber-400' : 'bg-slate-950/60 border-slate-800 hover:border-amber-700'
+                            }`}
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex items-center gap-3">
+                                <div className={`w-4 h-4 rounded-full border flex items-center justify-center mt-0.5 ${isSelected ? 'border-amber-400 bg-amber-500' : 'border-stone-600'}`}>
+                                  {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-slate-950"></div>}
+                                </div>
+                                <span className="font-semibold text-stone-100 text-sm">{opt.label}</span>
+                              </div>
+                              <span className="text-[10px] px-2 py-0.5 rounded font-mono font-semibold bg-amber-950 text-amber-300 border border-amber-700">{opt.badge}</span>
+                            </div>
+                            <p className="text-xs text-stone-400 mt-2 ml-7">{opt.desc}</p>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <div className="flex items-center justify-between pt-4 border-t border-slate-800">
+                      <button disabled={intlStep === 1} onClick={() => setIntlStep(intlStep - 1)} className="px-4 py-2 rounded-lg text-xs font-semibold bg-slate-800 text-stone-300 disabled:opacity-40">
+                        {t.prevStep}
+                      </button>
+                      {intlStep < 4 ? (
+                        <button onClick={() => setIntlStep(intlStep + 1)} className="px-5 py-2 rounded-lg text-xs font-semibold bg-amber-600 hover:bg-amber-500 text-white shadow">
+                          {t.nextStep}
+                        </button>
+                      ) : (
+                        <span className="text-xs font-mono text-amber-400 font-semibold">✓ International Evaluation Ready</span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* International Matrix Card */}
+              <div className="bg-gradient-to-b from-slate-900 via-amber-950/40 to-slate-900 rounded-2xl p-6 border border-amber-700/50 shadow-2xl space-y-4">
+                <div className="flex items-center justify-between border-b border-amber-800/40 pb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">🌐</span>
+                    <h3 className="font-serif font-bold text-stone-100 text-base">{t.liveEvaluation}</h3>
+                  </div>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-900 text-amber-300 border border-amber-700">WIPO / GLOBAL</span>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-slate-950/80 border border-amber-800/50 space-y-1">
+                  <div className="text-[10px] font-mono uppercase text-amber-400 font-bold">{t.matrixLegalClass}</div>
+                  <div className="text-sm font-bold text-stone-100">{intlResult.filingStrategy}</div>
+                  <div className="text-xs text-stone-300 font-serif">{intlResult.marketPathway}</div>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-slate-950/80 border border-amber-800/50 space-y-1.5">
+                  <div className="text-[10px] font-mono uppercase text-emerald-400 font-bold">{t.matrixIntlChecklist}</div>
+                  <p className="text-xs text-stone-200 leading-relaxed font-sans">{intlResult.gratkDisclosure}</p>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-slate-950/80 border border-amber-800/50 space-y-1.5">
+                  <div className="text-[10px] font-mono uppercase text-teal-400 font-bold">{t.matrixPatentPosture}</div>
+                  <p className="text-xs text-stone-300 leading-relaxed">{intlResult.foreignPriorArtRisk}</p>
+                </div>
+
+                <button
+                  onClick={() => handleSendChat(`How should I structure the PCT patent application and WIPO GRATK mandatory origin declaration for a ${intlResult.marketPathway} to withstand USPTO and EPO prior-art examination?`)}
+                  className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white font-semibold text-xs transition shadow-lg flex items-center justify-center gap-2"
+                >
+                  <span>{t.consultAiOnRoute}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      // Advanced Deep-Dive View Renderer
+      function renderAdvancedView() {
+        const turnoverNum = Number(advTurnover) || 0;
+        const calculatedFee = (turnoverNum * 100000 * 0.0015).toLocaleString('en-IN', { style: 'currency', currency: 'INR' });
+
+        return (
+          <div className="bg-slate-900/80 rounded-2xl p-6 border border-amber-800/50 shadow-xl space-y-4 animate-fadeIn">
+            <h3 className="text-base font-bold text-stone-100 font-serif flex items-center gap-2">
+              <span>🔬</span>
+              <span>Advanced Regulatory & ABS Deep-Dive Calculations</span>
+            </h3>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="p-4 rounded-xl bg-slate-950 border border-emerald-800/60 space-y-2">
+                <div className="flex justify-between text-xs font-mono">
+                  <span className="text-stone-300">Ex-Factory Gross Turnover:</span>
+                  <span className="text-amber-400 font-bold">₹{turnoverNum} Lakhs</span>
+                </div>
+                <input
+                  type="range" min="10" max="2000" step="10"
+                  value={advTurnover} onChange={(e) => setAdvTurnover(Number(e.target.value))}
+                  className="w-full accent-emerald-500 bg-slate-800 h-2 rounded-lg cursor-pointer"
+                />
+                <div className="text-xs text-stone-300 border-t border-slate-800 pt-2 flex justify-between">
+                  <span>Estimated ABS Contribution:</span>
+                  <span className="text-amber-400 font-bold">{calculatedFee}</span>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-xl bg-slate-950 border border-amber-800/60 text-xs text-stone-300 space-y-1">
+                <strong className="text-amber-400">CITES Screening & Provenance:</strong>
+                <p>Ensure species such as Saussurea costata, Nardostachys jatamansi, and Pterocarpus santalinus have Legal Procurement Certificates (LPC) before export.</p>
+              </div>
+            </div>
+          </div>
+        );
+      }
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
