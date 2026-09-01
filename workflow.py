@@ -21,20 +21,18 @@ class GraphRAGState(TypedDict):
     messages: Annotated[List[BaseMessage], operator.add]
 
 
-def build_workflow(vector_index, graph, graph_retriever):
+def build_workflow(graph, graph_retriever):
     """Build and compile the LangGraph workflow."""
 
     llm_generator = ChatOpenAI(model=LLM_GENERATE, temperature=0)
 
-    # --- Retriever setup ---
-    vector_retriever = vector_index.as_retriever(
-        search_type="similarity", search_kwargs={"k": 5}
-    )
+    # --- Retriever setup (ChromaDB for normal vector RAG) ---
+    from rag import get_vector_retriever, get_ensemble_retriever
 
-    from rag import get_ensemble_retriever
+    vector_retriever = get_vector_retriever(k=5)
 
     ensemble_retriever = get_ensemble_retriever(
-        graph_retriever, vector_index, graph_weight=0.6, vector_weight=0.4
+        graph_retriever, graph_weight=0.6, vector_weight=0.4
     )
 
     # --- Node functions ---

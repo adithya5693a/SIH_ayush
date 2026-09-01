@@ -31,9 +31,11 @@ EMBED_DIMENSIONS = 768
 LLM_EXTRACT = "gpt-4o-mini"      # Cheaper, for KG extraction
 LLM_GENERATE = "gpt-4o"          # Stronger, for final answers
 
+# --- ChromaDB ---
+CHROMA_DIR = "chroma_db"
+CHROMA_COLLECTION = "pdf_chunks"
+
 # --- Neo4j Index Names ---
-VECTOR_INDEX = "pdf_vector_index"
-KEYWORD_INDEX = "pdf_keyword_index"
 FULLTEXT_INDEX = "entity_fulltext"
 
 # --- Graph Schema (generic) ---

@@ -7,23 +7,26 @@ from config import PDF_PATH, LLM_GENERATE
 
 
 def ingest(pdf_path: str = PDF_PATH):
-    """Full ingestion pipeline: load PDF -> extract KG -> store in Neo4j."""
+    """Full ingestion pipeline: load PDF -> extract KG -> store in Neo4j + ChromaDB."""
     from pdf_loader import load_pdf
     from graph_store import connect_graph, build_transformer, extract_graph, store_graph
-    from vector_index import create_vector_index
+    from vector_index import create_vector_store
 
     documents = load_pdf(pdf_path)
 
+    # Graph extraction (Neo4j)
     graph = connect_graph()
     transformer = build_transformer()
     graph_docs = extract_graph(transformer, documents)
     store_graph(graph, graph_docs)
 
-    vector_index = create_vector_index(graph)
-    return graph, vector_index
+    # Vector store (ChromaDB)
+    create_vector_store(documents)
+
+    return graph
 
 
-def setup_app(graph, vector_index):
+def setup_app(graph):
     """Build the LangGraph workflow."""
     from graph_retriever import GraphRetriever
     from workflow import build_workflow
@@ -32,7 +35,7 @@ def setup_app(graph, vector_index):
     llm = ChatOpenAI(model=LLM_GENERATE, temperature=0)
     graph_retriever = GraphRetriever(graph=graph, llm=llm, hops=2)
 
-    return build_workflow(vector_index, graph, graph_retriever)
+    return build_workflow(graph, graph_retriever)
 
 
 def ask_graphrag(app, query: str) -> str:
@@ -55,11 +58,11 @@ def main():
         sys.exit(1)
 
     print("=" * 60)
-    print("GraphRAG Pipeline")
+    print("GraphRAG Pipeline (ChromaDB + Neo4j)")
     print("=" * 60)
 
-    graph, vector_index = ingest(pdf)
-    app = setup_app(graph, vector_index)
+    graph = ingest(pdf)
+    app = setup_app(graph)
 
     print("\nReady! Ask questions about your document.")
     print("Type 'quit' to exit.\n")

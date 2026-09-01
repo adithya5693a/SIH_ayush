@@ -5,6 +5,7 @@ langchain-openai
 langchain-experimental
 langgraph
 neo4j>=5.11
+chromadb
 pymupdf
 python-dotenv
 tiktoken

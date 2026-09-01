@@ -1,20 +1,17 @@
-"""RAG retrievers: normal vector RAG and ensemble (graph + vector)."""
+"""RAG retrievers: normal vector RAG (ChromaDB) and ensemble (graph + vector)."""
 
 from typing import List
 
 from langchain_core.retrievers import BaseRetriever
 from langchain_core.documents import Document
-from langchain_neo4j import Neo4jVector
 
 from graph_retriever import GraphRetriever
+from vector_index import get_retriever as get_chroma_retriever
 
 
-def get_vector_retriever(vector_index: Neo4jVector, k: int = 5):
-    """Standard vector similarity retriever (normal RAG)."""
-    return vector_index.as_retriever(
-        search_type="similarity",
-        search_kwargs={"k": k},
-    )
+def get_vector_retriever(k: int = 5):
+    """Standard vector similarity retriever using ChromaDB (normal RAG)."""
+    return get_chroma_retriever(k=k)
 
 
 class EnsembleRetriever(BaseRetriever):
@@ -44,13 +41,12 @@ class EnsembleRetriever(BaseRetriever):
 
 def get_ensemble_retriever(
     graph_retriever: GraphRetriever,
-    vector_index: Neo4jVector,
     graph_weight: float = 0.6,
     vector_weight: float = 0.4,
     k: int = 5,
 ) -> EnsembleRetriever:
-    """Ensemble retriever combining graph traversal + vector similarity."""
-    vector_ret = get_vector_retriever(vector_index, k=k)
+    """Ensemble retriever combining graph traversal + ChromaDB vector similarity."""
+    vector_ret = get_vector_retriever(k=k)
 
     ensemble = EnsembleRetriever(
         retrievers=[graph_retriever, vector_ret],
