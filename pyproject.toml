@@ -1,0 +1,18 @@
+[project]
+name = "graph-rag"
+version = "0.1.0"
+description = "GraphRAG pipeline with LangChain, Neo4j, and LM Studio embeddings"
+requires-python = ">=3.12"
+dependencies = [
+    "langchain>=0.3.27",
+    "langchain-community>=0.3.21",
+    "langchain-experimental>=0.3.4",
+    "langchain-neo4j>=0.3.0",
+    "langchain-openai>=0.3.35",
+    "langgraph>=1.0.1",
+    "neo4j>=5.11",
+    "pymupdf>=1.25.0",
+    "python-dotenv>=1.0.0",
+    "tiktoken>=0.7.0",
+    "tqdm>=4.67.0",
+]

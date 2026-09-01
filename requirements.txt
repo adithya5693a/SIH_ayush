@@ -1,0 +1,11 @@
+langchain
+langchain-community
+langchain-neo4j
+langchain-openai
+langchain-experimental
+langgraph
+neo4j>=5.11
+pymupdf
+python-dotenv
+tiktoken
+tqdm
