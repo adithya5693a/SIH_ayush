@@ -8,3 +8,6 @@ wheels/
 .env
 *.pdf
 data/
+.DS_Store
+my_chroma_db/
+my_chroma_db_nomic/
