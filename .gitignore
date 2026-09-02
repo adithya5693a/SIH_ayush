@@ -8,6 +8,5 @@ wheels/
 .env
 .DS_Store
 chroma_db/
-chroma_db_ayush/
 my_chroma_db/
 my_chroma_db_nomic/
