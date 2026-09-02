@@ -1,17 +1,15 @@
-"""ChromaDB vector store for normal RAG with LM Studio embeddings."""
+"""ChromaDB vector store for normal RAG with local HuggingFace embeddings."""
 
 import chromadb
 from chromadb.utils import embedding_functions
 
-from config import CHROMA_DIR, CHROMA_COLLECTION, LMSTUDIO_BASE_URL, EMBED_MODEL
+from config import CHROMA_DIR, CHROMA_COLLECTION, EMBED_MODEL
 
 
 def get_embedding_function():
-    """Create ChromaDB-compatible embedding function pointing to LM Studio."""
-    return embedding_functions.OpenAIEmbeddingFunction(
+    """Create ChromaDB-compatible embedding function using local HuggingFace model."""
+    return embedding_functions.SentenceTransformerEmbeddingFunction(
         model_name=EMBED_MODEL,
-        api_base=LMSTUDIO_BASE_URL,
-        api_key="lm-studio",
     )
 
 
@@ -64,13 +62,9 @@ def get_vector_store():
 def get_retriever(k: int = 5):
     """Get a retriever from ChromaDB for normal vector RAG."""
     from langchain_chroma import Chroma
-    from langchain_openai import OpenAIEmbeddings
+    from langchain_huggingface import HuggingFaceEmbeddings
 
-    embeddings = OpenAIEmbeddings(
-        model=EMBED_MODEL,
-        base_url=LMSTUDIO_BASE_URL,
-        api_key="lm-studio",
-    )
+    embeddings = HuggingFaceEmbeddings(model_name=EMBED_MODEL)
 
     vectorstore = Chroma(
         client=get_chroma_client(),

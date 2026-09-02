@@ -5,31 +5,28 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# --- API Keys ---
-os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY", "sk-your-key-here")
-
 # --- Neo4j Connection ---
-os.environ["NEO4J_URI"] = os.getenv("NEO4J_URI", "bolt://localhost:7687")
-os.environ["NEO4J_USERNAME"] = os.getenv("NEO4J_USERNAME", "neo4j")
-os.environ["NEO4J_PASSWORD"] = os.getenv("NEO4J_PASSWORD", "password")
+NEO4J_URI = os.getenv("NEO4J_URI", "bolt://localhost:7687")
+NEO4J_USERNAME = os.getenv("NEO4J_USERNAME", "neo4j")
+NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "password")
 
-# --- LM Studio (Local Embeddings) ---
-LMSTUDIO_BASE_URL = os.getenv("LMSTUDIO_BASE_URL", "http://localhost:1234/v1")
+os.environ["NEO4J_URI"] = NEO4J_URI
+os.environ["NEO4J_USERNAME"] = NEO4J_USERNAME
+os.environ["NEO4J_PASSWORD"] = NEO4J_PASSWORD
 
 # --- Paths ---
-PDF_PATH = "data/your_document.pdf"
+PDF_PATH = "data/Geographical Indications of Goods Act 1999.pdf"
 
 # --- Chunking ---
 CHUNK_SIZE = 1024
 CHUNK_OVERLAP = 200
 
-# --- Embeddings (LM Studio - local) ---
-EMBED_MODEL = "nomic-embed-text"
-EMBED_DIMENSIONS = 768
+# --- Embeddings (HuggingFace - local) ---
+EMBED_MODEL = "all-MiniLM-L6-v2"
 
-# --- LLMs (OpenAI - cloud) ---
-LLM_EXTRACT = "gpt-4o-mini"      # Cheaper, for KG extraction
-LLM_GENERATE = "gpt-4o"          # Stronger, for final answers
+# --- LLMs (Gemini) ---
+LLM_EXTRACT = "gemini-3.6-flash"
+LLM_GENERATE = "gemini-3.6-flash"
 
 # --- ChromaDB ---
 CHROMA_DIR = "chroma_db"

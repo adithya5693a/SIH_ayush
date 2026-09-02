@@ -6,7 +6,7 @@ warnings.filterwarnings("ignore", message=".*Pydantic serializer warnings.*")
 
 from langchain_neo4j import Neo4jGraph
 from langchain_experimental.graph_transformers import LLMGraphTransformer
-from langchain_openai import ChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
 
 from config import (
     NODE_TYPES,
@@ -34,7 +34,7 @@ def connect_graph() -> Neo4jGraph:
 
 def build_transformer() -> LLMGraphTransformer:
     """Create the LLMGraphTransformer with domain-specific schema."""
-    llm_extractor = ChatOpenAI(model=LLM_EXTRACT, temperature=0)
+    llm_extractor = ChatGoogleGenerativeAI(model=LLM_EXTRACT, temperature=0)
 
     transformer = LLMGraphTransformer(
         llm=llm_extractor,
