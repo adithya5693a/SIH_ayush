@@ -4,10 +4,10 @@ build/
 dist/
 wheels/
 *.egg-info
-.venv
+.venv/
 .env
-*.pdf
-data/
 .DS_Store
+chroma_db/
+chroma_db_ayush/
 my_chroma_db/
 my_chroma_db_nomic/

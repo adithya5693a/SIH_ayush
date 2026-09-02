@@ -3,6 +3,8 @@ langchain-community
 langchain-neo4j
 langchain-openai
 langchain-experimental
+langchain-huggingface
+sentence-transformers
 langgraph
 neo4j>=5.11
 chromadb
