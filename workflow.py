@@ -5,7 +5,7 @@ from typing import TypedDict, Annotated, List, Literal
 import operator
 from langchain_core.messages import BaseMessage
 from langgraph.graph import StateGraph, END
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_groq import ChatGroq
 
 from config import LLM_GENERATE
 
@@ -24,7 +24,7 @@ class GraphRAGState(TypedDict):
 def build_workflow(graph, graph_retriever):
     """Build and compile the LangGraph workflow."""
 
-    llm_generator = ChatGoogleGenerativeAI(model=LLM_GENERATE, temperature=0)
+    llm_generator = ChatGroq(model=LLM_GENERATE, temperature=0)
 
     # --- Retriever setup (ChromaDB for normal vector RAG) ---
     from rag import get_vector_retriever, get_ensemble_retriever

@@ -1,16 +1,14 @@
 """Neo4j graph connection, KG extraction, and storage."""
 
+import json
 import warnings
 
 warnings.filterwarnings("ignore", message=".*Pydantic serializer warnings.*")
 
 from langchain_neo4j import Neo4jGraph
-from langchain_experimental.graph_transformers import LLMGraphTransformer
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_groq import ChatGroq
 
 from config import (
-    NODE_TYPES,
-    RELATIONSHIP_TYPES,
     LLM_EXTRACT,
     FULLTEXT_INDEX,
 )
@@ -32,57 +30,90 @@ def connect_graph() -> Neo4jGraph:
     return graph
 
 
-def build_transformer() -> LLMGraphTransformer:
-    """Create the LLMGraphTransformer with domain-specific schema."""
-    llm_extractor = ChatGoogleGenerativeAI(model=LLM_EXTRACT, temperature=0)
+EXTRACT_PROMPT = """Extract entities and relationships from this legal text about Indian IP law.
 
-    transformer = LLMGraphTransformer(
-        llm=llm_extractor,
-        allowed_nodes=NODE_TYPES,
-        allowed_relationships=RELATIONSHIP_TYPES,
-        node_properties=["description", "source"],
-        relationship_properties=["confidence"],
-        strict_mode=False,
-    )
-    return transformer
+Return ONLY a JSON object:
+{{
+  "entities": [
+    {{"name": "Entity Name", "type": "Concept"}},
+    ...
+  ],
+  "relationships": [
+    {{"source": "Source Entity", "target": "Target Entity", "type": "RELATED_TO"}},
+    ...
+  ]
+}}
+
+Entity types: Concept, Organization, Location, Process, Technology, Substance, Act, Section
+Relationship types: CAUSES, CONTRIBUTES_TO, LEADS_TO, IMPACTS, PART_OF, LOCATED_IN, RELATED_TO, GOVERNS, DEFINES, AMENDS
+
+Text:
+{text}
+
+JSON:"""
 
 
-def extract_graph(
-    transformer: LLMGraphTransformer,
-    documents: list,
-    batch_size: int = 20,
-) -> list:
-    """Extract graph documents from text chunks in batches."""
+def extract_and_store(graph: Neo4jGraph, documents: list, batch_size: int = 5) -> None:
+    """Extract entities/relationships from documents and store directly in Neo4j."""
     from tqdm.auto import tqdm
 
-    all_graph_docs = []
-    for i in tqdm(range(0, len(documents), batch_size), desc="Extracting graph"):
+    llm = ChatGroq(model=LLM_EXTRACT, temperature=0)
+    total_nodes = 0
+    total_rels = 0
+
+    for i in tqdm(range(0, len(documents), batch_size), desc="Extracting & storing"):
         batch = documents[i : i + batch_size]
-        graph_docs = transformer.convert_to_graph_documents(batch)
-        all_graph_docs.extend(graph_docs)
+        for doc in batch:
+            text = doc.page_content[:2000]
+            prompt = EXTRACT_PROMPT.format(text=text)
+            try:
+                response = llm.invoke(prompt)
+                content = response.content
+                start = content.find("{")
+                end = content.rfind("}") + 1
+                if start < 0 or end <= start:
+                    continue
+                data = json.loads(content[start:end])
 
-    print(f"Extracted {len(all_graph_docs)} graph documents")
-    if all_graph_docs:
-        print(f"  Sample nodes: {[n.id for n in all_graph_docs[0].nodes[:5]]}")
-    return all_graph_docs
+                # Store entities
+                for e in data.get("entities", []):
+                    name = e["name"].strip()[:200]
+                    etype = e.get("type", "Concept").strip()
+                    graph.query(
+                        "MERGE (n:__Entity__ {id: $name}) "
+                        "SET n.type = $etype, n.source = $source",
+                        {"name": name, "etype": etype, "source": doc.metadata.get("source", "")},
+                    )
+                    total_nodes += 1
 
+                # Store relationships
+                for r in data.get("relationships", []):
+                    src = r["source"].strip()[:200]
+                    tgt = r["target"].strip()[:200]
+                    rtype = r.get("type", "RELATED_TO").strip()
+                    graph.query(
+                        "MATCH (a:__Entity__ {id: $src}) "
+                        "MATCH (b:__Entity__ {id: $tgt}) "
+                        f"MERGE (a)-[r:{rtype}]->(b)",
+                        {"src": src, "tgt": tgt},
+                    )
+                    total_rels += 1
 
-def store_graph(graph: Neo4jGraph, graph_docs: list) -> None:
-    """Store graph documents in Neo4j and create indexes."""
-    graph.add_graph_documents(
-        graph_docs,
-        baseEntityLabel=True,
-        include_source=True,
-    )
-    graph.refresh_schema()
+            except json.JSONDecodeError:
+                continue
+            except Exception as e:
+                print(f"  Warning: {e}")
+                continue
 
-    # Create required indexes
+    # Create indexes
     graph.query(f"""
         CREATE FULLTEXT INDEX {FULLTEXT_INDEX} IF NOT EXISTS
         FOR (n:__Entity__) ON EACH [n.id]
     """)
     graph.query("CREATE INDEX entity_id IF NOT EXISTS FOR (n:__Entity__) ON (n.id)")
+    graph.refresh_schema()
 
     node_count = graph.query("MATCH (n) RETURN count(n) as nodes")[0]["nodes"]
     rel_count = graph.query("MATCH ()-[r]->() RETURN count(r) as rels")[0]["rels"]
-    print(f"Graph stored: {node_count} nodes, {rel_count} relationships")
+    print(f"Extraction done: {total_nodes} nodes extracted, {total_rels} rels extracted")
+    print(f"Neo4j totals: {node_count} nodes, {rel_count} relationships")

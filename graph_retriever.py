@@ -6,7 +6,7 @@ from typing import List
 from langchain_core.retrievers import BaseRetriever
 from langchain_core.documents import Document
 from langchain_neo4j import Neo4jGraph
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_groq import ChatGroq
 
 from config import FULLTEXT_INDEX
 
@@ -15,7 +15,7 @@ class GraphRetriever(BaseRetriever):
     """Retrieves context by finding relevant entities and traversing their graph neighborhood."""
 
     graph: Neo4jGraph
-    llm: ChatGoogleGenerativeAI
+    llm: ChatGroq
     hops: int = 2
 
     def _get_relevant_documents(self, query: str) -> List[Document]:

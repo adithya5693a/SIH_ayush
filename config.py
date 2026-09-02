@@ -5,7 +5,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# --- Gemini API Key ---
+# --- API Keys ---
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+os.environ["GROQ_API_KEY"] = GROQ_API_KEY
+
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
 os.environ["GOOGLE_API_KEY"] = GOOGLE_API_KEY
 
@@ -28,13 +31,13 @@ CHUNK_OVERLAP = 200
 # --- Embeddings (HuggingFace - local) ---
 EMBED_MODEL = "all-MiniLM-L6-v2"
 
-# --- LLMs (Gemini) ---
-LLM_EXTRACT = "gemini-3.6-flash"
-LLM_GENERATE = "gemini-3.6-flash"
+# --- LLMs (Groq) ---
+LLM_EXTRACT = "openai/gpt-oss-120b"    # Larger model for structured extraction
+LLM_GENERATE = "allam-2-7b"            # Fast model for chat answers
 
 # --- ChromaDB ---
-CHROMA_DIR = "chroma_db"
-CHROMA_COLLECTION = "pdf_chunks"
+CHROMA_DIR = "chroma_db_ayush"
+CHROMA_COLLECTION = "ayush_statutory_corpus"
 
 # --- Neo4j Index Names ---
 FULLTEXT_INDEX = "entity_fulltext"

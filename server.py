@@ -1,163 +1,125 @@
-"""FastAPI Backend Server connecting ChromaDB RAG & OpenRouter to the React Frontend."""
+"""FastAPI backend for the Ayurveda IPR GraphRAG assistant."""
 
-import os
-import json
-from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
+import time
+from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import Optional, List, Dict, Any
 
-load_dotenv()
+import config
 
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
-OPENROUTER_BASE_URL = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
-MODEL_NAME = "openai/gpt-4o-mini"
-CHROMA_PERSIST_DIR = "chroma_db_ayush"
-COLLECTION_NAME = "ayush_statutory_corpus"
+app = FastAPI(title="AYUSH IPR GraphRAG API")
 
-app = FastAPI(
-    title="AYUSH IPR & ABS Regulatory Compliance Backend",
-    version="1.0.0"
-)
-
-# Enable CORS for frontend connection (Vite dev server, Vercel, Localhost)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-from langchain_openai import ChatOpenAI
-from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_community.vectorstores import Chroma
-
-print("🧠 Loading Embedding Model and ChromaDB Vector Store...")
-embedding_model = HuggingFaceEmbeddings(
-    model_name="all-MiniLM-L6-v2",
-    model_kwargs={"device": "cpu"},
-)
-
-vector_store = Chroma(
-    collection_name=COLLECTION_NAME,
-    embedding_function=embedding_model,
-    persist_directory=CHROMA_PERSIST_DIR,
-)
-retriever = vector_store.as_retriever(search_kwargs={"k": 4})
-
-llm = ChatOpenAI(
-    model=MODEL_NAME,
-    api_key=OPENROUTER_API_KEY,
-    base_url=OPENROUTER_BASE_URL,
-    temperature=0.1,
-)
-print("✅ Backend models and ChromaDB initialized!")
-
 
 class ChatRequest(BaseModel):
     query: str
-    jurisdiction: Optional[str] = "national"
+    jurisdiction: str = "national"
+
+class ChatResponse(BaseModel):
+    answer: str
+    sources: list = []
+    query_type: str = "simple"
+
+class ClassifyRequest(BaseModel):
+    category: str = "classical"
+    processingMethod: str = "standard_extract"
+    sourcing: str = "cultivated"
+    entityType: str = "indian"
 
 
-@app.get("/api/health")
-def health_check():
-    return {
-        "status": "healthy",
-        "database": "ChromaDB",
-        "collection": COLLECTION_NAME,
-        "llm_model": MODEL_NAME
-    }
+_vector_retriever = None
+_llm = None
 
 
-@app.post("/api/chat")
-async def chat_with_rag(req: ChatRequest):
-    if not req.query or not req.query.strip():
-        raise HTTPException(status_code=400, detail="Query cannot be empty")
+def get_llm():
+    global _llm
+    if _llm is None:
+        from langchain_groq import ChatGroq
+        _llm = ChatGroq(model=config.LLM_GENERATE, temperature=0)
+    return _llm
 
-    query = req.query.strip()
-    
-    # 1. Retrieve top statutory chunks from ChromaDB
-    retrieved_docs = retriever.invoke(query)
-    context_text = "\n\n---\n\n".join(
-        [
-            f"[Source: {d.metadata.get('document_name', 'Act')} | Page: {d.metadata.get('page_number', 'N/A')}]\n{d.page_content}"
-            for d in retrieved_docs
-        ]
+
+def get_vector_retriever():
+    global _vector_retriever
+    if _vector_retriever is None:
+        from vector_index import get_retriever as _get
+        _vector_retriever = _get(k=3)
+    return _vector_retriever
+
+
+@app.on_event("startup")
+def startup():
+    llm = get_llm()
+    try:
+        llm.invoke("Say ok")
+        print(f"[startup] Groq ({config.LLM_GENERATE}): AVAILABLE")
+    except Exception as e:
+        print(f"[startup] Groq: FAILED ({e})")
+
+
+@app.get("/")
+def root():
+    return {"status": "ok", "service": "AYUSH IPR GraphRAG", "llm": _llm is not None}
+
+
+@app.post("/api/chat", response_model=ChatResponse)
+def chat(req: ChatRequest):
+    retriever = get_vector_retriever()
+    docs = retriever.invoke(req.query)
+    # Truncate context to stay under TPM limit
+    context = "\n\n".join([d.page_content[:800] for d in docs[:3]])
+
+    # Try LLM with retry on rate limit
+    for attempt in range(3):
+        try:
+            llm = get_llm()
+            prompt = f"""You are an Ayurveda IPR legal assistant. Answer using ONLY the context below. Be concise. Cite the source document when possible.
+
+Context:
+{context}
+
+Question: {req.query}
+
+Answer:"""
+            answer = llm.invoke(prompt).content
+            return ChatResponse(
+                answer=answer,
+                sources=[d.metadata.get("source", "") for d in docs],
+                query_type="graphrag",
+            )
+        except Exception as e:
+            print(f"LLM attempt {attempt+1} failed: {e}")
+            if attempt < 2:
+                time.sleep(5)
+
+    # Vector-only fallback
+    parts = []
+    for i, d in enumerate(docs[:3]):
+        src = d.metadata.get("source", d.metadata.get("file_path", "doc"))
+        parts.append(f"[{i+1}] ({src})\n{d.page_content[:600]}")
+    answer = "Retrieved context from knowledge base:\n\n" + "\n\n---\n\n".join(parts)
+    return ChatResponse(
+        answer=answer,
+        sources=[d.metadata.get("source", "") for d in docs],
+        query_type="vector_only",
     )
 
-    # 2. Query LLM with strict structured JSON output
-    prompt = f"""You are an elite legal counsel & AI compliance specialist for Indian AYUSH medicine, IPR (Patents Act, GI Act, Trademarks), Biological Diversity Act (ABS), and FSSAI Ayurveda Aahar regulations.
 
-Jurisdiction: {req.jurisdiction.upper()}
+@app.post("/api/classify")
+def classify(req: ClassifyRequest):
+    from mock_rag_classify import classify_formulation
+    return classify_formulation(req.category, req.sourcing, req.entityType)
 
-Statutory Excerpts retrieved from official laws:
-{context_text}
 
-User Question: {query}
-
-Generate a comprehensive legal assessment structured EXACTLY as the following JSON object:
-{{
-  "executiveSummary": "Concise 2-3 sentence executive legal opinion answering the question directly.",
-  "statutoryBreakdown": [
-    {{
-      "citation": "Exact Act Name & Section (e.g. Patents Act 1970 § 3(p) / BDA 2023 § 6)",
-      "note": "Detailed explanation of this section's legal impact and requirements.",
-      "status": "COMPLIANCE MANDATE / PRIOR ART BAR / REGULATORY PERMIT"
-    }}
-  ],
-  "actionableSteps": [
-    "Concrete step 1 for the applicant/researcher",
-    "Concrete step 2 (e.g. File Form III with NBA / Submit HPLC synergy proofs)"
-  ],
-  "citationsPills": [
-    "Patents Act § 3(p)",
-    "BDA 2023 Form III",
-    "FSSAI Regs 2022"
-  ],
-  "confidenceScore": "98.5%",
-  "registryLinks": [
-    {{ "label": "Indian Patent Office Portal", "url": "https://ipindiaonline.gov.in" }},
-    {{ "label": "National Biodiversity Authority", "url": "http://nbaindia.org" }}
-  ]
-}}
-
-Return ONLY valid JSON. No conversational preamble or code fences."""
-
-    try:
-        response = llm.invoke(prompt)
-        content = response.content.strip()
-        # Clean potential markdown fences
-        if content.startswith("```json"):
-            content = content[7:]
-        if content.startswith("```"):
-            content = content[3:]
-        if content.endswith("```"):
-            content = content[:-3]
-        content = content.strip()
-        
-        parsed_json = json.loads(content)
-        return parsed_json
-    except Exception as e:
-        print(f"Error in RAG generation: {e}")
-        # Fallback structured response
-        return {
-            "executiveSummary": f"Assessment based on retrieved statutory acts: {retrieved_docs[0].page_content[:300] if retrieved_docs else 'Please consult legal counsel.'}",
-            "statutoryBreakdown": [
-                {
-                    "citation": f"{retrieved_docs[0].metadata.get('document_name', 'Statutory Act')} (Page {retrieved_docs[0].metadata.get('page_number', '1')})",
-                    "note": retrieved_docs[0].page_content[:250],
-                    "status": "STATUTORY REFERENCE"
-                }
-            ] if retrieved_docs else [],
-            "actionableSteps": ["Review the cited statutory provisions with a registered patent attorney."],
-            "citationsPills": ["AYUSH Statutory Corpus"],
-            "confidenceScore": "95.0%",
-            "registryLinks": [
-                { "label": "Indian Patent Office", "url": "https://ipindia.gov.in" }
-            ]
-        }
+@app.get("/api/tkdl-search")
+def tkdl_search(q: str = Query(...)):
+    return {"query": q, "results": [], "message": "TKDL search not yet implemented"}
 
 
 if __name__ == "__main__":
