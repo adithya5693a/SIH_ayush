@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { I18N } from '../data/i18n.js';
 import { queryRagLegalAssistant } from '../services/mockRagEngine.js';
+import { askLegalAssistantApi } from '../services/api.js';
 
 export default function AIChatAssistant({
   jurisdiction,
@@ -32,7 +33,7 @@ export default function AIChatAssistant({
     "Does exporting CITES-listed Saussurea costata require special ABS clearing-house clearance?"
   ];
 
-  const handleSend = (queryText) => {
+  const handleSend = async (queryText) => {
     const text = (typeof queryText === 'string' ? queryText : inputQuery || '').trim();
     if (!text) return;
 
@@ -47,8 +48,8 @@ export default function AIChatAssistant({
     setInputQuery('');
     setIsLoading(true);
 
-    setTimeout(() => {
-      const responseData = queryRagLegalAssistant(text, jurisdiction);
+    try {
+      const responseData = await askLegalAssistantApi(text, jurisdiction);
       const assistantMsg = {
         id: Date.now() + '-ai',
         sender: 'assistant',
@@ -56,8 +57,11 @@ export default function AIChatAssistant({
         content: responseData
       };
       setMessages((prev) => [...prev, assistantMsg]);
+    } catch (error) {
+      console.error("Error querying backend:", error);
+    } finally {
       setIsLoading(false);
-    }, 450);
+    }
   };
 
   const handleClearChat = () => {
