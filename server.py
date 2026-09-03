@@ -45,12 +45,9 @@ def get_llm():
     return _llm
 
 
-def get_vector_retriever():
-    global _vector_retriever
-    if _vector_retriever is None:
-        from vector_index import get_retriever as _get
-        _vector_retriever = _get(k=3)
-    return _vector_retriever
+def get_vector_retriever(jurisdiction: str = None):
+    from vector_index import get_retriever as _get
+    return _get(k=4, jurisdiction=jurisdiction)
 
 
 @app.on_event("startup")
@@ -70,10 +67,10 @@ def root():
 
 @app.post("/api/chat", response_model=ChatResponse)
 def chat(req: ChatRequest):
-    retriever = get_vector_retriever()
+    retriever = get_vector_retriever(jurisdiction=req.jurisdiction)
     docs = retriever.invoke(req.query)
     # Truncate context to stay under TPM limit
-    context = "\n\n".join([d.page_content[:800] for d in docs[:3]])
+    context = "\n\n".join([d.page_content[:800] for d in docs[:4]])
 
     # Try LLM with retry on rate limit
     for attempt in range(3):

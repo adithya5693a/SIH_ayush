@@ -59,8 +59,8 @@ def get_vector_store():
     )
 
 
-def get_retriever(k: int = 5):
-    """Get a retriever from ChromaDB for normal vector RAG."""
+def get_retriever(k: int = 5, jurisdiction: str = None):
+    """Get a retriever from ChromaDB for normal vector RAG, with optional jurisdiction filtering."""
     from langchain_chroma import Chroma
     from langchain_huggingface import HuggingFaceEmbeddings
 
@@ -72,4 +72,8 @@ def get_retriever(k: int = 5):
         embedding_function=embeddings,
     )
 
-    return vectorstore.as_retriever(search_kwargs={"k": k})
+    search_kwargs = {"k": k}
+    if jurisdiction in ("national", "international"):
+        search_kwargs["filter"] = {"jurisdiction": jurisdiction}
+
+    return vectorstore.as_retriever(search_kwargs=search_kwargs)

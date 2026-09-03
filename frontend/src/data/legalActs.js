@@ -77,13 +77,38 @@ export const STATUTORY_PROVISIONS = {
         title: "Protection of Regional Ayurvedic Herbs & Formulations",
         description: "Provides legal protection to geographical origin-specific goods (e.g. Malabar Pepper, Alleppey Cardamom, Kangra Tea, Navara Rice) preventing unauthorized commercial appropriation.",
         portalUrl: "https://ipindia.gov.in"
+      },
+      {
+        id: "divya-pharmacy-case",
+        act: "Landmark Case Law: Divya Pharmacy v. Union of India (2018)",
+        section: "Uttarakhand HC Ruling on BDA § 21 & ABS",
+        title: "Domestic Commercial Entities Subject to Benefit Sharing",
+        description: "Landmark High Court ruling affirming that Indian commercial companies (including Divya Pharmacy / Patanjali) are legally obligated to share fair and equitable benefits with local biodiversity management committees (BMCs) under the Biological Diversity Act.",
+        guidelines: "Established that 'Fair and Equitable Benefit Sharing' (FEBS) applies universally to conserve Indian biological heritage, though codified Vaidyas and domestic AYUSH practitioners gained subsequent legislative exemption in the 2023 Amendment Act.",
+        portalUrl: "http://nbaindia.org"
+      },
+      {
+        id: "ipo-tk-guidelines",
+        act: "CGPDTM Guidelines for Examination of TK Patent Applications",
+        section: "Patent Office Screening Guidelines (6-Step Test)",
+        title: "Guidelines for Patents Involving Traditional Knowledge & Botanicals",
+        description: "Official manual issued by the Indian Patent Office outlining the step-by-step examination procedure for claims based on codified AYUSH knowledge, prior-art concordance with TKDL, and non-obvious synergistic efficacy proofs.",
+        portalUrl: "https://ipindia.gov.in"
+      },
+      {
+        id: "nba-abs-guidelines-2024",
+        act: "National Biodiversity Authority ABS Guidelines & Forms 2024",
+        section: "Form I, II, III, IV & Benefit-Sharing Norms",
+        title: "2024 Standardized ABS Application Protocols",
+        description: "Official 2024 regulatory procedures for accessing Indian biological resources, commercialization royalties (0.1%-0.5% ex-factory), and obtaining Form III mandatory approval prior to grant of patent rights.",
+        portalUrl: "http://nbaindia.org"
       }
     ]
   },
   international: {
     title: "International Treaties & Cross-Border Frameworks",
-    jurisdiction: "Global / WIPO / CBD / WTO",
-    authorities: ["World Intellectual Property Organization (WIPO)", "Convention on Biological Diversity (CBD) Secretariat", "WTO TRIPS Council", "European Patent Office (EPO)", "USPTO"],
+    jurisdiction: "Global / WIPO / CBD / WTO / WHO",
+    authorities: ["World Intellectual Property Organization (WIPO)", "Convention on Biological Diversity (CBD) Secretariat", "WTO TRIPS Council", "European Patent Office (EPO)", "US FDA", "WHO"],
     acts: [
       {
         id: "wipo-gratk-2024",
@@ -96,6 +121,14 @@ export const STATUTORY_PROVISIONS = {
         portalUrl: "https://www.wipo.int/treaties/en/ip/gratk/"
       },
       {
+        id: "cbd-1992",
+        act: "Convention on Biological Diversity (CBD 1992)",
+        section: "Article 8(j) & Article 15",
+        title: "Sovereign Rights over Genetic Resources & Traditional Knowledge",
+        description: "Foundational international treaty recognizing national sovereignty of member states over their genetic biological resources, mandating Prior Informed Consent (PIC) and fair benefit sharing for indigenous communities.",
+        portalUrl: "https://www.cbd.int"
+      },
+      {
         id: "nagoya-protocol",
         act: "Nagoya Protocol on Access and Benefit Sharing (to CBD)",
         section: "Article 5, 6, 7 & 15",
@@ -105,20 +138,44 @@ export const STATUTORY_PROVISIONS = {
         portalUrl: "https://absch.cbd.int"
       },
       {
+        id: "wto-trips",
+        act: "WTO TRIPS Agreement (1994)",
+        section: "Article 27.3(b) & Traditional Knowledge Review",
+        title: "Trade-Related Aspects of Intellectual Property Rights",
+        description: "Multilateral WTO agreement governing patentability of plants, animals, and microbiological processes. Defines developing countries' positions on mandatory disclosure of origin and protecting non-patentable traditional medicinal knowledge.",
+        portalUrl: "https://www.wto.org/trips"
+      },
+      {
+        id: "eu-thmpd",
+        act: "EU Directive 2004/24/EC (THMPD)",
+        section: "Article 16a to 16i",
+        title: "Traditional Herbal Medicinal Products Directive",
+        description: "Simplified registration pathway for Ayurvedic medicines in the European Union. Requires documentation of at least 30 years of traditional medicinal use, including at least 15 years within the EU community or reciprocal traditional regimes.",
+        portalUrl: "https://health.ec.europa.eu"
+      },
+      {
+        id: "usfda-botanical-dshea",
+        act: "US FDA Dietary Supplement Health & Education Act (DSHEA 1994) & 21 CFR 111",
+        section: "21 U.S.C. 321(ff) & 21 CFR 111 cGMP",
+        title: "United States Dietary Supplement vs Botanical Drug Pathway",
+        description: "AYUSH export to the United States primarily enters as Dietary Supplements under DSHEA, requiring strict cGMP compliance, structure/function claims, and prohibition of disease-treatment claims. Novel botanical extracts require New Dietary Ingredient (NDI) 75-day pre-market notifications.",
+        portalUrl: "https://www.fda.gov"
+      },
+      {
+        id: "who-gacp",
+        act: "WHO Guidelines on Good Agricultural & Collection Practices (GACP 2003)",
+        section: "Quality Standards for Herbal Raw Materials",
+        title: "Global Quality Assurance for Medicinal Plant Harvest",
+        description: "World Health Organization standards ensuring botanical authentication, contamination-free harvesting (heavy metals, pesticides, microbial load), and sustainable cultivation for global export compliance.",
+        portalUrl: "https://www.who.int/medicines"
+      },
+      {
         id: "pct-rule4",
         act: "Patent Cooperation Treaty (PCT Regulations)",
         section: "PCT Rule 4.17 & Article 27",
         title: "Declaration of Inventorship & Genetic Resource Origin",
         description: "Standardized international filing route covering 157 countries. Applicants must ensure Indian NBA Form III approval is harmonized with PCT national phase entry deadlines (30/31 months).",
         portalUrl: "https://www.wipo.int/pct/en/"
-      },
-      {
-        id: "usfda-botanical",
-        act: "US FDA Guidance for Industry: Botanical Drug Products & DSHEA",
-        section: "21 CFR 111 & 21 CFR 312",
-        title: "United States Botanical Drug vs. Dietary Supplement Pathway",
-        description: "Dietary supplements require cGMP compliance and structure/function claims. Botanical drugs require IND/NDA pathways with batch-to-batch spectroscopic consistency.",
-        portalUrl: "https://www.fda.gov"
       }
     ]
   }
